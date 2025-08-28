@@ -1,0 +1,88 @@
+/* =========================
+   BANNER
+   ========================= */
+.banner{
+  background: url("/images/banner-ppp.png") top center/contain no-repeat;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16/5;    /* jaga proporsi */
+  max-width: 720px;
+  margin: auto;
+}
+
+/* =========================
+   PROGRESS
+   ========================= */
+.progress{
+  height: 28px;          /* tebal bar */
+  border-radius: 20px;   /* pill */
+}
+.progress-bar{
+  background-color: #354777;
+  font-size: .85rem;     /* teks normal */
+  font-weight: 500;
+  display: flex;
+  align-items: center;   /* center vertical */
+  justify-content: center; /* center horizontal */
+}
+
+/* =========================
+   STEPPER
+   ========================= */
+.stepper{
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: nowrap;     /* tetap satu baris */
+}
+.stepper .step-item{
+  flex: 1 1 0;           /* lebar merata */
+  min-width: 0;          /* boleh mengecil */
+  text-align: center;
+}
+/* Bullets angka (responsif, tanpa duplikasi) */
+.stepper .step-dot{
+  width: clamp(26px, 8vw, 40px);
+  height: clamp(26px, 8vw, 40px);
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: clamp(.75rem, 2.4vw, 1rem);
+  border: 2px solid #dee2e6;
+  background: #f8f9fa;
+  color: #6c757d;
+  margin-inline: auto;
+}
+/* Label step (responsif) */
+.stepper .label{
+  margin-top: .35rem;
+  font-size: clamp(.7rem, 2.2vw, .9rem);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* States */
+.stepper .active .step-dot{
+  background: #0d6efd;
+  color: #fff;
+  border-color: #0d6efd;
+}
+.stepper .done .step-dot{
+  background: #198754;
+  color: #fff;
+  border-color: #198754;
+}
+/* Rapatkan di layar kecil */
+@media (max-width: 420px){
+  .stepper{ gap: 8px; }
+}
+@media (max-width: 576px) {
+  .progress-bar span, 
+  .progress-bar {
+    font-size: 0; /* sembunyikan teks, bar tetap jalan */
+  }
+}
+
