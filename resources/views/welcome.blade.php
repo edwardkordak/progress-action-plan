@@ -4,8 +4,9 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Form Pemantauan — Wizard 5 Langkah</title>
+    <title>Pemantauan Progres Kerja</title>
     <!-- Bootstrap 5 -->
+        <link rel="icon" href="/images/logopu.png" type="image/png" style="width: 50px; aspect-ratio: 1/1; object-fit: contain;">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
 
