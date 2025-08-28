@@ -93,13 +93,13 @@
                                 <div class="col-md-6">
                                     <label for="nama" class="form-label">Nama</label>
                                     <input type="text" class="form-control" id="nama" name="nama"
-                                       disabled>
+                                       readonly>
 
                                 </div>
                                 <div class="col-md-6">
                                     <label for="jabatan" class="form-label">Jabatan</label>
                                     <input type="text" class="form-control" id="jabatan" name="jabatan"
-                                       disabled>
+                                       readonly>
 
                                 </div>
                             </div>
@@ -111,12 +111,12 @@
                                 <div class="col-md-6">
                                     <label for="lokasi" class="form-label">Lokasi</label>
                                     <input type="text" class="form-control" id="lokasi" name="lokasi"
-                                        disabled>
+                                        readonly>
                                 </div>
                                 <div class="col-md-6">
                                     <label for="tanggal" class="form-label">Tanggal</label>
                                     <input type="date" class="form-control" id="tanggal" value="2022-02-22"
-                                        disabled>
+                                        readonly>
 
                                 </div>
                             </div>
