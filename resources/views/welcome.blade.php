@@ -174,7 +174,8 @@
 
                         <div class="mb-3">
                             <label class="form-label">Keterangan</label>
-                            <textarea rows="3" class="form-control ket-text"></textarea>
+                            <textarea rows="3" class="form-control ket-text" required></textarea>
+                            
                             <div class="invalid-feedback">Keterangan Wajib Diisi.</div>
                         </div>
                     </section>
@@ -186,6 +187,7 @@
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="js/script.js"></script>
 </body>
 

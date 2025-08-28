@@ -6,7 +6,6 @@
     const btnNext = document.getElementById("btnNext");
     const stepperEl = document.getElementById("stepper");
     const selectPaket = document.getElementById("paket_pekerjaan");
-
     const dynamicWrap = document.getElementById("dynamicSteps");
     const itemTpl = document.getElementById("item-template");
 
@@ -16,9 +15,8 @@
     const lokasiEl = document.getElementById("lokasi");
     const tanggalEl = document.getElementById("tanggal");
 
-    // ====== Default config ======
+    // ====== Config ======
     const paketConfig = { paket1: 3, paket2: 5, paket3: 4 };
-
     const DEFAULTS = {
         nama: "Budi Santoso",
         jabatan: "Bendahara",
@@ -26,11 +24,13 @@
     };
 
     // ====== State ======
-    let steps = []; // array of active step sections (step0 + dynamic items)
-    let current = 0; // active step index
+    let steps = []; // step0 + dynamic items
+    let current = 0; // index step aktif
     let step0 = document.querySelector('.step[data-step="0"]');
 
     // ====== Helpers ======
+    const isPaketSelected = () => !!(selectPaket && selectPaket.value);
+
     function formatDateForInput(date) {
         const y = date.getFullYear();
         const m = String(date.getMonth() + 1).padStart(2, "0");
@@ -54,68 +54,60 @@
     // --- Utility: lock + mirror agar tetap terkirim ---
     function setLockedValue(inputEl, name, value) {
         if (!inputEl) return;
-        // set tampilan
+
+        // set tampilan (dikunci)
         inputEl.value = value;
-        inputEl.disabled = true; // benar-benar tidak bisa diubah
+        inputEl.disabled = true;
         inputEl.classList.remove("is-invalid");
         inputEl.classList.add("is-valid");
 
-        // cari / buat hidden mirror agar value terkirim
-        const form = inputEl.form;
-        let mirror = form.querySelector(
+        // buat/cari hidden mirror agar value terkirim saat submit
+        const f = inputEl.form;
+        let mirror = f.querySelector(
             `input[type="hidden"][data-mirror="${name}"]`
         );
         if (!mirror) {
             mirror = document.createElement("input");
             mirror.type = "hidden";
+            mirror.name = name; // penting: name sama dengan field asli
             mirror.setAttribute("data-mirror", name);
-            // penting: name harus sama dengan field aslinya
-            mirror.name = name;
-            form.appendChild(mirror);
+            f.appendChild(mirror);
         }
         mirror.value = value;
     }
 
+    function removeMirrors(names) {
+        names.forEach((n) => {
+            const m = form.querySelector(
+                `input[type="hidden"][data-mirror="${n}"]`
+            );
+            if (m) m.remove();
+        });
+    }
+
+    function unlockAndClearIdentityFields() {
+        [namaEl, jabatanEl, lokasiEl, tanggalEl].forEach((el) => {
+            if (!el) return;
+            el.disabled = false;
+            el.value = "";
+            el.classList.remove("is-valid", "is-invalid");
+        });
+        removeMirrors(["nama", "jabatan", "lokasi", "tanggal"]);
+    }
+
+    function lockIdentityFields(values) {
+        setLockedValue(namaEl, "nama", values.nama);
+        setLockedValue(jabatanEl, "jabatan", values.jabatan);
+        setLockedValue(lokasiEl, "lokasi", values.lokasi);
+        setLockedValue(tanggalEl, "tanggal", values.tanggal);
+    }
+
     function autofillFromOption(opt) {
-        const DEFAULTS = {
-            nama: "Budi Santoso",
-            jabatan: "Bendahara",
-            lokasi: "Manado",
-        };
         const nama = opt.getAttribute("data-nama") || DEFAULTS.nama;
         const jab = opt.getAttribute("data-jabatan") || DEFAULTS.jabatan;
         const lokasi = opt.getAttribute("data-lokasi") || DEFAULTS.lokasi;
-
-        // format tanggal hari ini (YYYY-MM-DD)
-        const now = new Date();
-        const y = now.getFullYear();
-        const m = String(now.getMonth() + 1).padStart(2, "0");
-        const d = String(now.getDate()).padStart(2, "0");
-        const tanggal = `${y}-${m}-${d}`;
-
-        // kunci + mirror (disabled utk UI, hidden utk submit)
+        const tanggal = formatDateForInput(new Date());
         lockIdentityFields({ nama, jabatan: jab, lokasi, tanggal });
-    }
-
-    // panggil ini setelah autofill paket
-    function lockIdentityFields(values) {
-        // values: { nama, jabatan, lokasi, tanggal }
-        setLockedValue(document.getElementById("nama"), "nama", values.nama);
-        setLockedValue(
-            document.getElementById("jabatan"),
-            "jabatan",
-            values.jabatan
-        );
-        setLockedValue(
-            document.getElementById("lokasi"),
-            "lokasi",
-            values.lokasi
-        );
-        setLockedValue(
-            document.getElementById("tanggal"),
-            "tanggal",
-            values.tanggal
-        );
     }
 
     // Buat ulang N item step dari <template>, beri name agar FormData rapi
@@ -128,16 +120,11 @@
             node.classList.add("d-none");
             node.querySelector(".item-no").textContent = i + 1;
 
-            // Beri name untuk setiap input/select supaya ikut terkirim
-            const selItem = node.querySelector(".item-select");
-            const vol = node.querySelector(".vol-input");
-            const sat = node.querySelector(".sat-select");
-            const ket = node.querySelector(".ket-text");
-
-            if (selItem) selItem.name = `items[${i}][nama]`;
-            if (vol) vol.name = `items[${i}][volume]`;
-            if (sat) sat.name = `items[${i}][satuan]`;
-            if (ket) ket.name = `items[${i}][keterangan]`;
+            // nama field agar terkirim
+            node.querySelector(".item-select").name = `items[${i}][nama]`;
+            node.querySelector(".vol-input").name = `items[${i}][volume]`;
+            node.querySelector(".sat-select").name = `items[${i}][satuan]`;
+            node.querySelector(".ket-text").name = `items[${i}][keterangan]`;
 
             dynamicWrap.appendChild(node);
             created.push(node);
@@ -183,15 +170,21 @@
         progressBar.classList.remove("d-none");
     }
 
+    function refreshNextButtonLabel() {
+        if (current === 0 && !isPaketSelected()) {
+            btnNext.textContent = "Pilih paket";
+            return;
+        }
+        btnNext.textContent =
+            current === steps.length - 1 ? "Submit" : "Lanjut →";
+    }
+
     function showStep(idx) {
-        // Sembunyikan semua
         document
             .querySelectorAll(".step")
             .forEach((s) => s.classList.add("d-none"));
-        // Tampilkan hanya steps aktif
         steps.forEach((s, i) => s.classList.toggle("d-none", i !== idx));
 
-        // Update stepper states
         Array.from(stepperEl.querySelectorAll(".step-item")).forEach(
             (el, i) => {
                 el.classList.remove("active", "done");
@@ -200,14 +193,20 @@
             }
         );
 
-        // Tombol
         btnPrev.disabled = idx === 0;
-        btnNext.textContent = idx === steps.length - 1 ? "Submit" : "Lanjut →";
-
+        refreshNextButtonLabel();
         updateProgress();
     }
 
     function validateCurrentStep() {
+        // Khusus step0: wajib pilih paket dulu
+        if (current === 0 && !isPaketSelected()) {
+            // tandai paket invalid & fokus
+            selectPaket.classList.add("is-invalid");
+            selectPaket.focus();
+            return false;
+        }
+
         const active = steps[current];
         const inputs = Array.from(
             active.querySelectorAll("input, select, textarea")
@@ -228,9 +227,12 @@
     // ====== Events ======
     if (selectPaket) {
         selectPaket.addEventListener("change", () => {
+            selectPaket.classList.remove("is-invalid");
+
             const opt = selectPaket.selectedOptions[0];
             if (!opt || !opt.value) {
-                // reset ke 0 item kalau "-- Pilih --"
+                // reset: kosongkan identitas + hapus item steps
+                unlockAndClearIdentityFields();
                 dynamicWrap.innerHTML = "";
                 steps = [step0];
                 current = 0;
@@ -238,10 +240,11 @@
                 showStep(0);
                 return;
             }
-            // autofill (sesuai permintaanmu)
+
+            // paket dipilih → autofill & lock
             autofillFromOption(opt);
 
-            // Rebuild steps berdasarkan paket
+            // buat ulang item steps
             rebuildActiveSteps();
             current = 0;
             renderStepper();
@@ -256,11 +259,11 @@
         }
     });
 
-    // Gunakan submit untuk "Next" & submit beneran di akhir
+    // Next/Submit
     form.addEventListener("submit", (e) => {
         const lastIndex = steps.length - 1;
 
-        // Kalau belum di step terakhir, treat as Next
+        // Belum di step terakhir → treat as Next
         if (current < lastIndex) {
             e.preventDefault();
             if (validateCurrentStep()) {
@@ -274,21 +277,26 @@
             return;
         }
 
-        // Step terakhir = validasi & submit
+        // Step terakhir → validasi lalu submit
         if (!validateCurrentStep()) {
             e.preventDefault();
             return;
         }
 
-        // Demo submit (silakan hapus preventDefault saat ready POST ke server)
+        // Demo submit
         e.preventDefault();
         const data = new FormData(form);
         const obj = {};
         data.forEach((v, k) => (obj[k] = v));
         console.log("Data terkirim:", obj);
-        alert(
-            "Form terkirim! (cek console). Ganti handler submit untuk POST ke server."
-        );
+
+        Swal.fire({
+            title: "Berhasil!",
+            text: "Form berhasil terkirim",
+            icon: "success",
+            confirmButtonText: "OK",
+            confirmButtonColor: "#3085d6",
+        });
     });
 
     form.addEventListener("input", (e) => {
@@ -300,14 +308,13 @@
     });
 
     // ====== INIT ======
-    // Awal: belum pilih paket → hanya step0
     steps = [step0];
     current = 0;
     renderStepper();
     showStep(0);
 
-    // Kalau user sudah memilih paket sebelumnya (mis. saat reload)
-    if (selectPaket && selectPaket.value) {
+    // Jika halaman reload dan paket sudah terisi, rebuild
+    if (isPaketSelected()) {
         const opt = selectPaket.selectedOptions[0];
         autofillFromOption(opt);
         rebuildActiveSteps();
