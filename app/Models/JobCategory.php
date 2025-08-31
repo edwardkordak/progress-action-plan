@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class JobCategory extends Model
 {
     protected $fillable = ['code', 'name', 'sort_order'];
+    
     public function items()
     {
         return $this->hasMany(Item::class, 'job_category_id');

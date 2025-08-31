@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class Item extends Model
 {
     protected $fillable = ['package_id', 'job_category_id', 'name', 'default_unit_id'];
+    
     public function package()
     {
         return $this->belongsTo(Package::class);
