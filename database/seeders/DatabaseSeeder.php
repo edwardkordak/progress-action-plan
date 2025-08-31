@@ -2,9 +2,16 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
+
+use App\Models\User;
+use App\Models\Satker;
+use App\Models\Ppk;
+use App\Models\Package;
+use App\Models\JobCategory;
+use App\Models\Unit;
+use App\Models\Item;
 
 class DatabaseSeeder extends Seeder
 {
@@ -13,11 +20,112 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
-
+        // 0) User demo/admin (opsional)
         User::factory()->create([
-            'name' => 'Balai Wilayah Sungai Sulawesi I',
+            'name'  => 'Balai Wilayah Sungai Sulawesi I',
             'email' => 'bwss1@example.com',
         ]);
+
+        // 1) MASTER: 3 Jenis & beberapa Satuan
+        $jobCategories = [
+            ['code' => 'PESA', 'name' => 'Pekerjaan Saluran',   'sort_order' => 1],
+            ['code' => 'PEMBA', 'name' => 'Pekerjaan Bangunan Sadap', 'sort_order' => 2],
+            ['code' => 'PELENG', 'name' => 'Pekerjaan Bangunan Pelengkap', 'sort_order' => 3],
+        ];
+        foreach ($jobCategories as $jc) {
+            JobCategory::firstOrCreate(
+                ['code' => $jc['code']],
+                ['name' => $jc['name'], 'sort_order' => $jc['sort_order']]
+            );
+        }
+
+        $units = [
+            ['name' => 'Liter', 'symbol' => 'L'],
+            ['name' => 'Meter', 'symbol' => 'm'],
+            ['name' => 'Unit',  'symbol' => null],
+        ];
+        foreach ($units as $u) {
+            Unit::firstOrCreate(['name' => $u['name'], 'symbol' => $u['symbol']]);
+        }
+
+        // 2) Satker -> PPK -> Paket (lokasi)
+        $tree = [
+            'SNVT PJPA' => [
+                'Irigasi dan Rawa' => [
+                    ['nama_paket' => 'Rehabilitasi Daerah Irigasi Dataran Kotamobagu', 
+                     'penyedia_jasa' => 'CV. Nikita Waya',
+                     'lokasi' => 'Kab. Bolaang Mongondow Timur',
+                    ],
+                ],
+            ],
+     
+        ];
+
+        DB::transaction(function () use ($tree) {
+            foreach ($tree as $satkerName => $ppks) {
+                $satker = Satker::firstOrCreate(['name' => $satkerName]);
+
+                foreach ($ppks as $ppkName => $packages) {
+                    $ppk = Ppk::firstOrCreate([
+                        'satker_id' => $satker->id,
+                        'name'      => $ppkName,
+                    ]);
+
+                    foreach ($packages as $pkg) {
+                        // Unik per PPK + nama_paket (sesuai unique index migration)
+                        Package::firstOrCreate(
+                            ['ppk_id' => $ppk->id,
+                             'penyedia_jasa' => $pkg['penyedia_jasa'],
+                             'nama_paket' => $pkg['nama_paket']],
+                            ['satker_id' => $satker->id, 
+                             'lokasi' => $pkg['lokasi'] ?? null]
+                        );
+                    }
+                }
+            }
+        });
+
+        // 3) Item per Paket & Jenis (dengan default satuan, optional)
+        $catsByCode    = JobCategory::pluck('id', 'code'); // ['GAL'=>1, 'PEM'=>2, 'FIN'=>3]
+        $defaultUnitId = Unit::where('symbol', 'L')->orWhere('name', 'Liter')->value('id');
+
+        $catalog = [
+            'PESA' => ['Galian Tanah', 
+                      'Pengadaan dan Pemasangan Pasangan Batu Mortar Tipe N (1 PC: 4 PP)', 
+                      'Pekerjaan Plesteran',
+                      'Pekerjaan Siaran'],
+            'PEMBA' => ['Galian Tanah', 
+                      'Pengadaan dan Pemasangan Pasangan Batu Mortar Tipe N (1 PC: 4 PP)', 
+                      'Pekerjaan Plesteran',
+                      'Pekerjaan Siaran'],
+            'PELENG' => ['Galian Tanah', 
+                      'Pengadaan dan Pemasangan Pasangan Batu Mortar Tipe N (1 PC: 4 PP)', 
+                      'Pekerjaan Plesteran',
+                      'Pekerjaan Siaran'],
+        ];
+
+        foreach (Package::cursor() as $pkg) {
+            foreach ($catalog as $code => $names) {
+                $catId = $catsByCode[$code] ?? null;
+                if (!$catId) {
+                    continue;
+                }
+
+                foreach ($names as $name) {
+                    Item::firstOrCreate(
+                        [
+                            'package_id'      => $pkg->id,
+                            'job_category_id' => $catId,
+                            'name'            => $name,
+                        ],
+                        [
+                            'default_unit_id' => $defaultUnitId, // boleh null jika tidak mau default
+                        ]
+                    );
+                }
+            }
+        }
+
+        $this->command?->info('Seeding selesai: JobCategories, Units, Satker/PPK/Packages, Items.');
     }
 }
