@@ -40,6 +40,11 @@ class ItemsTable
                     ->searchable()
                     ->sortable(),
 
+                TextColumn::make('price')
+                    ->label('Harga Item')
+                    ->badge()
+                    ->color('gray')
+                    ->sortable(),
                 TextColumn::make('defaultUnit.name')
                     ->label('Satuan Volume')
                     ->badge()

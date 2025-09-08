@@ -16,6 +16,7 @@ return new class extends Migration
             $t->foreignId('package_id')->constrained('packages')->cascadeOnDelete();
             $t->foreignId('job_category_id')->constrained('job_categories')->cascadeOnDelete();
             $t->string('name'); // nama item pekerjaan
+            $t->bigInteger('price'); // harga item pekerjaan
             $t->foreignId('default_unit_id')->nullable()->constrained('units')->nullOnDelete();
             $t->timestamps();
             $t->unique(['package_id', 'job_category_id', 'name']); // unik dalam paket+jenis

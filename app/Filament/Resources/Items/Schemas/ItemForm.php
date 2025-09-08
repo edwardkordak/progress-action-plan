@@ -22,6 +22,8 @@ class ItemForm
                     ->required(),
                 TextInput::make('name')
                     ->required(),
+                TextInput::make('price')
+                    ->required(),
                 Select::make('default_unit_id')
                     ->label('Satuan Volume')
                     ->relationship('defaultUnit', 'name')

@@ -38,6 +38,9 @@ class PackageForm
                 TextInput::make('nama_paket')
                     ->label('Nama Paket')
                     ->required(),
+                TextInput::make('price')
+                    ->label('Nilai Kontrak')
+                    ->required(),
 
                 TextInput::make('penyedia_jasa')
                     ->label('Penyedia Jasa')

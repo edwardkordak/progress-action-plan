@@ -54,6 +54,7 @@ class DatabaseSeeder extends Seeder
                 'Irigasi dan Rawa' => [
                     ['nama_paket' => 'Rehabilitasi Daerah Irigasi Dataran Kotamobagu', 
                      'penyedia_jasa' => 'CV. Nikita Waya',
+                     'price' => 10000,
                      'lokasi' => 'Kab. Bolaang Mongondow Timur',
                     ],
                 ],
@@ -77,7 +78,8 @@ class DatabaseSeeder extends Seeder
                             ['ppk_id' => $ppk->id,
                              'penyedia_jasa' => $pkg['penyedia_jasa'],
                              'nama_paket' => $pkg['nama_paket']],
-                            ['satker_id' => $satker->id, 
+                            ['price' => $pkg['price'] ?? 0,
+                             'satker_id' => $satker->id, 
                              'lokasi' => $pkg['lokasi'] ?? null]
                         );
                     }
@@ -117,6 +119,7 @@ class DatabaseSeeder extends Seeder
                             'package_id'      => $pkg->id,
                             'job_category_id' => $catId,
                             'name'            => $name,
+                            'price'          => rand(100000, 5000000), 
                         ],
                         [
                             'default_unit_id' => $defaultUnitId, // boleh null jika tidak mau default

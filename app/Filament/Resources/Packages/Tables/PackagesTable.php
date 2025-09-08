@@ -24,6 +24,9 @@ class PackagesTable
                     ->sortable(),
                 TextColumn::make('nama_paket')
                     ->searchable(),
+                TextColumn::make('price')
+                    ->label('Harga Paket')
+                    ->searchable(),
                 TextColumn::make('penyedia_jasa')
                     ->searchable(),
                 TextColumn::make('lokasi')

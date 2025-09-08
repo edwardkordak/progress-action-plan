@@ -16,8 +16,9 @@ return new class extends Migration
             $t->foreignId('satker_id')->constrained()->cascadeOnDelete();
             $t->foreignId('ppk_id')->constrained('ppks')->cascadeOnDelete();
             $t->string('nama_paket');
+            $t->bigInteger('price');
             $t->string('penyedia_jasa');
-            $t->string('lokasi')->nullable();   // untuk auto-fill
+            $t->string('lokasi')->nullable();
             $t->timestamps();
             $t->unique(['ppk_id', 'nama_paket']);
         });

@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('realizations', function (Blueprint $table) {
             $table->id();
             $table->foreignId('packages_id')->constrained('packages')->onDelete('cascade');
-           $table->decimal('bobot', 8, 3);
+            $table->decimal('bobot', 8, 3);
             $table->date('tanggal');
             $table->timestamps();
         });
