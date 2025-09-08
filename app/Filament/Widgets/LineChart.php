@@ -13,7 +13,7 @@ class LineChart extends ChartWidget
     use InteractsWithPageFilters;
 
     protected ?string $heading = 'Line Chart';
-    // protected int|string|array $columnSpan = 'full';
+    protected int|string|array $columnSpan = 'full';
 
     protected function getData(): array
     {
@@ -47,7 +47,7 @@ class LineChart extends ChartWidget
         return [
             'datasets' => [
                 [
-                    'label' => 'Realisasi (%)',
+                    'label' => 'Target (%)',
                     'data' => $cumulative,
                     'borderColor' => 'rgb(153, 102, 255)',
                     'backgroundColor' => 'rgba(153, 102, 255, 0.2)',

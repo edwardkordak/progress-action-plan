@@ -22,7 +22,7 @@ class Dashboard extends BaseDashboard
     {
         return [
             DeviasiWidget::class,
-            BarChart::class,
+            // BarChart::class,
             LineChart::class,
            
         ];
