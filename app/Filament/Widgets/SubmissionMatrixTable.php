@@ -52,28 +52,55 @@ class SubmissionMatrixTable extends BaseWidget
     /** "Tabs" ala screenshot → gunakan filter di atas tabel */
     protected function getTableFilters(): array
     {
+        // daftar item yang boleh difilter (custom)
+        $itemOptions = [
+            'Galian Tanah' => 'Galian Tanah',
+            'Pekerjaan Plesteran' => 'Pekerjaan Plesteran',
+            'Pekerjaan Siaran' => 'Pekerjaan Siaran',
+            'Pengadaan dan Pemasangan Pasangan Batu Mortar Tipe N (1 PC: 4 PP)' =>
+            'Pengadaan dan Pemasangan Pasangan Batu Mortar Tipe N (1 PC: 4 PP)',
+        ];
+
         return [
-            SelectFilter::make('job_category_id')
+            // Filter KATEGORI (tetap seperti sebelumnya, tapi pakai array $data)
+            \Filament\Tables\Filters\SelectFilter::make('job_category_id')
                 ->label('Kategori')
                 ->options(fn () => \App\Models\JobCategory::query()
-                    ->orderBy('sort_order')
-                    ->orderBy('name')
-                    ->pluck('name', 'id')
-                    ->all())
+                    ->orderBy('sort_order')->orderBy('name')
+                    ->pluck('name', 'id')->all())
                 ->placeholder('All')
                 ->indicator('Kategori')
                 ->searchable()
                 ->preload()
                 ->native(false)
                 ->query(function (Builder $query, array $data) {
-                    $value = $data['value'] ?? null;        // Filament v4: ambil dari array state
+                    $value = $data['value'] ?? null;
                     if (filled($value)) {
-                        // sebutkan tabel biar aman kalau nanti ada join
                         $query->where('data_submission_details.job_category_id', $value);
+                    }
+                }),
+
+            // Filter ITEM (statis, by name)
+            \Filament\Tables\Filters\SelectFilter::make('item_name')
+                ->label('Item')
+                ->options($itemOptions)          // value = label (pakai nama item)
+                ->placeholder('All')
+                ->indicator('Item')
+                ->searchable()
+                ->preload()
+                ->native(false)
+                ->query(function (Builder $query, array $data) {
+                    $name = $data['value'] ?? null;
+                    if (filled($name)) {
+                        // filter lewat relasi item berdasarkan nama
+                        $query->whereHas('item', fn ($iq) => $iq->where('name', $name));
+                        // Jika datamu kadang nggak persis sama, bisa ganti ke LIKE:
+                        // $query->whereHas('item', fn ($iq) => $iq->where('name', 'like', $name . '%'));
                     }
                 }),
         ];
     }
+
 
 
     /** Letakkan filter di header (mirip tabs/pills) */
