@@ -196,7 +196,7 @@
                                 <input class="form-control" id="penyedia_jasa_auto" readonly>
                             </div>
                             <div class="col-12">
-                                <label class="form-label">Nama</label>
+                                <label class="form-label">Nama Pengawas</label>
                                 <input class="form-control" id="nama" name="nama" required>
                             </div>
                             <div class="col-12">

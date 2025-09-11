@@ -16,11 +16,11 @@ return new class extends Migration
             $t->foreignId('satker_id')->constrained('satkers')->cascadeOnDelete();
             $t->foreignId('ppk_id')->constrained('ppks')->cascadeOnDelete();
             $t->foreignId('package_id')->constrained('packages')->cascadeOnDelete();
-            $t->string('penyedia_jasa');     // auto
-            $t->string('nama');     // pengisi
-            $t->string('jabatan');  // pengisi
-            $t->string('lokasi');   // auto: dari package
-            $t->date('tanggal');    // auto: today(server)
+            $t->string('penyedia_jasa');   
+            $t->string('nama');     
+            $t->string('jabatan');  
+            $t->string('lokasi');   
+            $t->date('tanggal');    
             $t->timestamps();
             $t->index(['satker_id', 'ppk_id', 'package_id']);
         });
