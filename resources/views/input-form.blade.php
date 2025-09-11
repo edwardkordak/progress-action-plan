@@ -254,6 +254,7 @@
 
             // satuan (server → js)
             const units = @json($units->map(fn($u) => ['id' => $u->id, 'label' => $u->symbol ? "{$u->name} ({$u->symbol})" : $u->name]));
+            const unitMap = Object.fromEntries(units.map(u => [String(u.id), u.label])); // id → label
 
             function goto(step) {
                 current = step;
@@ -435,15 +436,18 @@
             function renderStepsForCategories(cats, pkgId) {
                 cats.sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
                 const m = [{
-                    lbl: '#lblStep2',
-                    body: '#bodyStep2'
-                }, {
-                    lbl: '#lblStep3',
-                    body: '#bodyStep3'
-                }, {
-                    lbl: '#lblStep4',
-                    body: '#bodyStep4'
-                }];
+                        lbl: '#lblStep2',
+                        body: '#bodyStep2'
+                    },
+                    {
+                        lbl: '#lblStep3',
+                        body: '#bodyStep3'
+                    },
+                    {
+                        lbl: '#lblStep4',
+                        body: '#bodyStep4'
+                    }
+                ];
                 cats.slice(0, 3).forEach((cat, i) => {
                     qs(m[i].lbl).textContent = cat.name;
                     renderCategoryFixed(qs(m[i].body), cat, i, pkgId);
@@ -453,11 +457,11 @@
             // tampilkan semua item (Volume & Satuan REQUIRED)
             function renderCategoryFixed(container, cat, idx, pkgId) {
                 container.innerHTML = `
-      <div class="mb-2"><h2 class="h6 mb-2">Jenis: ${cat.name}</h2></div>
-      <input type="hidden" name="details[${idx}][category_id]" value="${cat.id}">
-      <div class="item-list" data-list></div>
-      <div class="alert alert-info d-none mt-2" data-empty>Belum ada item pekerjaan untuk jenis ini.</div>
-    `;
+                                        <div class="mb-2"><h2 class="h6 mb-2">Jenis: ${cat.name}</h2></div>
+                                        <input type="hidden" name="details[${idx}][category_id]" value="${cat.id}">
+                                        <div class="item-list" data-list></div>
+                                        <div class="alert alert-info d-none mt-2" data-empty>Belum ada item pekerjaan untuk jenis ini.</div>
+                                     `;
                 const list = container.querySelector('[data-list]'),
                     empty = container.querySelector('[data-empty]');
 
@@ -468,31 +472,38 @@
                             return;
                         }
                         items.forEach((it, rowIdx) => {
+                            const unitId = it.default_unit_id ? String(it.default_unit_id) : "";
+                            const unitText = unitId ? (unitMap[unitId] ?? "") : "";
+
                             const card = document.createElement('div');
                             card.className = 'item-card mb-2';
                             card.innerHTML = `
-            <div class="item-title">${it.name}</div>
-            <input type="hidden" name="details[${idx}][rows][${rowIdx}][item_id]" value="${it.id}">
-            <div class="row g-2">
-              <div class="col-12 col-md-3">
-                <label class="form-label">Volume</label>
-                <input type="number" step="0.01" min="0" class="form-control" name="details[${idx}][rows][${rowIdx}][volume]" required>
-              </div>
-              <div class="col-12 col-md-4 col-lg-3">
-                <label class="form-label">Satuan</label>
-                <select class="form-select" name="details[${idx}][rows][${rowIdx}][satuan_id]" required>
-                  <option value="">-- Pilih --</option>
-                  ${units.map(u=>`<option value="${u.id}">${u.label}</option>`).join('')}
-                </select>
-              </div>
-              <div class="col-12 col-md-5 col-lg-6">
-                <label class="form-label">Keterangan</label>
-                <input class="form-control" name="details[${idx}][rows][${rowIdx}][keterangan]" placeholder="Opsional">
-              </div>
-            </div>
-          `;
-                            const satSel = card.querySelector('select[name*="[satuan_id]"]');
-                            if (it.default_unit_id) satSel.value = String(it.default_unit_id);
+                        <div class="item-title">${it.name}</div>
+                        <input type="hidden" name="details[${idx}][rows][${rowIdx}][item_id]" value="${it.id}">
+                        <div class="row g-2">
+                          <div class="col-12 col-md-4">
+                            <label class="form-label">Volume</label>
+                            <input type="number" step="0.01" min="0" class="form-control"
+                                   name="details[${idx}][rows][${rowIdx}][volume]" required>
+                          </div>
+                          <div class="col-12 col-md-4 col-lg-4">
+                            <label class="form-label">Satuan</label>
+                            <!-- Tampilkan label satuan (readonly) -->
+                            <input class="form-control"
+                                   name="details[${idx}][rows][${rowIdx}][satuan_label]"
+                                   value="${unitText}" readonly required>
+                            <!-- Kirim ID satuan ke server -->
+                            <input type="hidden"
+                                   name="details[${idx}][rows][${rowIdx}][satuan_id]"
+                                   value="${unitId}">
+                            ${unitId ? "" : `<div class="text-danger small mt-1">Satuan default belum diset pada item ini.</div>`}
+                          </div>
+                          <div class="col-12 col-md-5 col-lg-4">
+                            <label class="form-label">Keterangan</label>
+                            <input class="form-control" name="details[${idx}][rows][${rowIdx}][keterangan]" placeholder="Opsional">
+                          </div>
+                        </div>
+                    `;
                             list.appendChild(card);
                         });
                     })
