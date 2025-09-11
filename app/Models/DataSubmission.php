@@ -25,4 +25,8 @@ class DataSubmission extends Model
     {
         return $this->hasMany(DataSubmissionDetail::class);
     }
+        public function item()
+    {
+        return $this->belongsTo(Item::class);
+    }
 }

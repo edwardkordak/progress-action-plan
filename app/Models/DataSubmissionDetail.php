@@ -20,4 +20,9 @@ class DataSubmissionDetail extends Model
     {
         return $this->belongsTo(Unit::class, 'satuan_id');
     }
+    public function jobCategory()
+    {
+        return $this->belongsTo(\App\Models\JobCategory::class, 'job_category_id');
+    }
+
 }

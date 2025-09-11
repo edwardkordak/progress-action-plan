@@ -7,6 +7,7 @@ use Filament\Schemas\Schema;
 use App\Filament\Widgets\BarChart;
 use App\Filament\Widgets\DeviasiWidget;
 use App\Filament\Widgets\LineChart;
+use App\Filament\Widgets\SubmissionMatrixTable;
 use Filament\Forms\Components\Select;
 use Filament\Schemas\Components\Section;
 use Filament\Forms\Components\DatePicker;
@@ -24,6 +25,7 @@ class Dashboard extends BaseDashboard
             DeviasiWidget::class,
             // BarChart::class,
             LineChart::class,
+            SubmissionMatrixTable::class,
            
         ];
     }
@@ -50,7 +52,7 @@ class Dashboard extends BaseDashboard
                         DatePicker::make('endDate')
                             ->label('Tanggal Selesai')
                             ->live(),
-
+                        
                     ])
                     ->columns(3)
                     ->columnSpanFull(),
