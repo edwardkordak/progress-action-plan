@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('realizations', function (Blueprint $table) {
+        Schema::create('targets', function (Blueprint $table) {
             $table->id();
             $table->foreignId('packages_id')->constrained('packages')->onDelete('cascade');
             $table->decimal('bobot', 8, 3);
@@ -25,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('realizations');
+        Schema::dropIfExists('targets');
     }
 };

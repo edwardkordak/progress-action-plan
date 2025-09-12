@@ -21,7 +21,6 @@ class SubmissionMatrixTable extends BaseWidget
     protected static ?string $heading = 'Rincian Submission Harian';
     protected int|string|array $columnSpan = 'full';
 
-    /** Query dasar (terbawa filter paket & tanggal dari Page) */
     protected function scopedQuery(): Builder
     {
         $q = DataSubmissionDetail::query()
@@ -49,10 +48,8 @@ class SubmissionMatrixTable extends BaseWidget
         );
     }
 
-    /** "Tabs" ala screenshot → gunakan filter di atas tabel */
     protected function getTableFilters(): array
     {
-        // daftar item yang boleh difilter (custom)
         $itemOptions = [
             'Galian Tanah' => 'Galian Tanah',
             'Pekerjaan Plesteran' => 'Pekerjaan Plesteran',
@@ -62,8 +59,7 @@ class SubmissionMatrixTable extends BaseWidget
         ];
 
         return [
-            // Filter KATEGORI (tetap seperti sebelumnya, tapi pakai array $data)
-            \Filament\Tables\Filters\SelectFilter::make('job_category_id')
+            SelectFilter::make('job_category_id')
                 ->label('Kategori')
                 ->options(fn () => \App\Models\JobCategory::query()
                     ->orderBy('sort_order')->orderBy('name')
@@ -80,10 +76,9 @@ class SubmissionMatrixTable extends BaseWidget
                     }
                 }),
 
-            // Filter ITEM (statis, by name)
-            \Filament\Tables\Filters\SelectFilter::make('item_name')
+            SelectFilter::make('item_name')
                 ->label('Item')
-                ->options($itemOptions)          // value = label (pakai nama item)
+                ->options($itemOptions)
                 ->placeholder('All')
                 ->indicator('Item')
                 ->searchable()
@@ -92,24 +87,16 @@ class SubmissionMatrixTable extends BaseWidget
                 ->query(function (Builder $query, array $data) {
                     $name = $data['value'] ?? null;
                     if (filled($name)) {
-                        // filter lewat relasi item berdasarkan nama
                         $query->whereHas('item', fn ($iq) => $iq->where('name', $name));
-                        // Jika datamu kadang nggak persis sama, bisa ganti ke LIKE:
-                        // $query->whereHas('item', fn ($iq) => $iq->where('name', 'like', $name . '%'));
                     }
                 }),
         ];
     }
 
-
-
-    /** Letakkan filter di header (mirip tabs/pills) */
     protected function getTableFiltersLayout(): ?string
     {
         return 'above-content';
     }
-
-    /** Dropdown "Group by" */
     protected function getTableGroups(): array
     {
         return [

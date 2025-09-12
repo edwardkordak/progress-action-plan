@@ -2,7 +2,7 @@
 
 namespace App\Filament\Widgets;
 
-use App\Models\Realization;
+use App\Models\Target;
 use Filament\Support\RawJs;
 use Filament\Widgets\ChartWidget;
 use Filament\Widgets\Concerns\InteractsWithPageFilters;
@@ -21,7 +21,7 @@ class LineChart extends ChartWidget
     $endDate = $this->filters['endDate'] ?? null;
     $packageId = $this->filters['package_id'] ?? null;
 
-    $query = Realization::query()->orderBy('tanggal');
+    $query = Target::query()->orderBy('tanggal');
 
     if ($packageId) {
         $query->where('packages_id', $packageId);
@@ -36,7 +36,7 @@ class LineChart extends ChartWidget
     // --- Hitung baseline sebelum startDate ---
     $baseline = 15.73;
     if ($startDate) {
-        $baseline += Realization::query()
+        $baseline += Target::query()
             ->when($packageId, fn ($q) => $q->where('packages_id', $packageId))
             ->whereDate('tanggal', '<', $startDate)
             ->sum('bobot');

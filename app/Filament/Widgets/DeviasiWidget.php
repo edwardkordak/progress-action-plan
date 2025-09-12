@@ -2,7 +2,7 @@
 
 namespace App\Filament\Widgets;
 
-use App\Models\Realization;
+use App\Models\Target;
 use Carbon\Carbon;
 use Filament\Widgets\Concerns\InteractsWithPageFilters;
 use Filament\Widgets\StatsOverviewWidget;
@@ -25,14 +25,14 @@ class DeviasiWidget extends StatsOverviewWidget
         // Baseline awal + akumulasi sebelum startDate
         $baseline = 15.73;
         if ($startDate) {
-            $baseline += Realization::query()
+            $baseline += Target::query()
                 ->when($packageId, fn ($q) => $q->where('packages_id', $packageId))
                 ->whereDate('tanggal', '<', $startDate)
                 ->sum('bobot');
         }
 
         // Data dalam rentang
-        $q = Realization::query()->orderBy('tanggal');
+        $q = Target::query()->orderBy('tanggal');
         if ($packageId) $q->where('packages_id', $packageId);
         if ($startDate) $q->whereDate('tanggal', '>=', $startDate);
         if ($endDate)   $q->whereDate('tanggal', '<=', $endDate);
@@ -70,7 +70,8 @@ class DeviasiWidget extends StatsOverviewWidget
                 ->icon('heroicon-o-check-badge')
                 ->color('info')
                 ->extraAttributes(['class' => 'rounded-2xl']),
-                // ===== Kartu Target =====
+
+                
             Stat::make('Realisasi', 'Belum Ada')
                 ->description($period ? "{$period}" : 'Periode aktif')
                 ->descriptionIcon('heroicon-o-calendar')

@@ -12,7 +12,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # ===== Install dependency Laravel di CI (lebih cepat di shared hosting) =====
+      # ===== Install dependency Laravel  =====
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
@@ -24,7 +24,7 @@ jobs:
         run: |
           composer install --no-dev --prefer-dist --optimize-autoloader
 
-      # ===== Upload project ke Hostinger via SCP (pakai whitelist source) =====
+      # ===== Upload project ke Hostinger =====
       - name: Upload to Hostinger
         uses: appleboy/scp-action@v0.1.7
         with:
@@ -32,7 +32,6 @@ jobs:
           username: ${{ secrets.HOSTINGER_USER }}
           port: ${{ secrets.HOSTINGER_PORT }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          # Kirim hanya yang diperlukan (pisah dengan koma)
           source: >
             app,
             bootstrap,
@@ -48,8 +47,6 @@ jobs:
             composer.lock
           target: "~/domains/progress-action-plan.bwssulawesi1.id/public_html"
           overwrite: true
-          # Tips: kalau mau benar-benar bersih tiap deploy, aktifkan baris di bawah
-          # rm: true
 
       # ===== Jalankan perintah pasca-deploy di server =====
       - name: Run Laravel commands on server

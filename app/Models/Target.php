@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Realization extends Model
+class Target extends Model
 {
     protected $fillable = [
         'packages_id',

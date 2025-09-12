@@ -20,13 +20,11 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // 0) User demo/admin (opsional)
         User::factory()->create([
             'name'  => 'Balai Wilayah Sungai Sulawesi I',
             'email' => 'bwss1@example.com',
         ]);
 
-        // 1) MASTER: 3 Jenis & beberapa Satuan
         $jobCategories = [
             ['code' => 'PESA', 'name' => 'Pekerjaan Saluran',   'sort_order' => 1],
             ['code' => 'PEMBA', 'name' => 'Pekerjaan Bangunan Sadap', 'sort_order' => 2],
@@ -40,20 +38,18 @@ class DatabaseSeeder extends Seeder
         }
 
         $units = [
-            ['name' => 'Liter', 'symbol' => 'L'],
-            ['name' => 'Meter', 'symbol' => 'm'],
-            ['name' => 'Unit',  'symbol' => null],
+            ['name' => 'Meter Persegi', 'symbol' => 'm²'],
+            ['name' => 'Meter Kubik', 'symbol' => 'm³'],
         ];
         foreach ($units as $u) {
             Unit::firstOrCreate(['name' => $u['name'], 'symbol' => $u['symbol']]);
         }
 
-        // 2) Satker -> PPK -> Paket (lokasi)
         $tree = [
             'SNVT PJPA' => [
                 'Irigasi dan Rawa' => [
                     ['nama_paket' => 'Rehabilitasi Daerah Irigasi Dataran Kotamobagu', 
-                     'penyedia_jasa' => 'CV. Nikita Waya',
+                     'penyedia_jasa' => 'PT. Nihara Anugerah',
                      'price' => 10000,
                      'lokasi' => 'Kab. Bolaang Mongondow Timur',
                     ],
@@ -89,7 +85,7 @@ class DatabaseSeeder extends Seeder
 
         // 3) Item per Paket & Jenis (dengan default satuan, optional)
         $catsByCode    = JobCategory::pluck('id', 'code'); // ['GAL'=>1, 'PEM'=>2, 'FIN'=>3]
-        $defaultUnitId = Unit::where('symbol', 'L')->orWhere('name', 'Liter')->value('id');
+        $defaultUnitId = Unit::where('symbol', 'm²')->orWhere('name', 'Meter Persegi')->value('id');
 
         $catalog = [
             'PESA' => ['Galian Tanah', 

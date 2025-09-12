@@ -2,7 +2,7 @@
 
 namespace App\Filament\Widgets;
 
-use App\Models\Realization;
+use App\Models\Target;
 use Filament\Support\RawJs;
 use Filament\Widgets\ChartWidget;
 use Filament\Widgets\Concerns\InteractsWithPageFilters;
@@ -21,7 +21,7 @@ class BarChart extends ChartWidget
         $endDate = $this->filters['endDate'] ?? null;
         $packageId = $this->filters['package_id'] ?? null;
 
-        $query = Realization::query()->orderBy('tanggal');
+        $query = Target::query()->orderBy('tanggal');
 
         if ($packageId) {
             $query->where('packages_id', $packageId);
@@ -47,7 +47,7 @@ class BarChart extends ChartWidget
         return [
             'datasets' => [
                 [
-                    'label' => 'Realisasi (%)',
+                    'label' => 'Target (%)',
                     'data' => $cumulative,
                     'borderColor' => 'rgb(153, 102, 255)',
                     'backgroundColor' => 'rgba(153, 102, 255, 0.2)',
