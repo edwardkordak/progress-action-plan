@@ -38,7 +38,7 @@ class Dashboard extends BaseDashboard
                 Section::make()
                     ->schema([
                         Select::make('package_id')
-                            ->label('Paket Pekerjaan')
+                            ->label('Paket Pekerjaaan')
                             ->options(Package::pluck('nama_paket', 'id'))
                             ->searchable()
                             ->placeholder('Pilih Paket')
