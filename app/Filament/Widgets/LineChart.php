@@ -33,7 +33,6 @@ class LineChart extends ChartWidget
         $query->whereDate('tanggal', '<=', $endDate);
     }
 
-    // --- Hitung baseline sebelum startDate ---
     $baseline = 15.73;
     if ($startDate) {
         $baseline += Target::query()
@@ -42,7 +41,6 @@ class LineChart extends ChartWidget
             ->sum('bobot');
     }
 
-    // --- Data dalam rentang filter ---
     $data = $query->get(['tanggal', 'bobot']);
 
     $cumulative = [];

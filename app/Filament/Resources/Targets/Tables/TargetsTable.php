@@ -14,7 +14,8 @@ class TargetsTable
     {
         return $table
             ->columns([
-                TextColumn::make('packages_id')
+                TextColumn::make('package.nama_paket')
+                    ->label('Paket Pekerjaan')
                     ->numeric()
                     ->sortable(),
                 TextColumn::make('bobot')

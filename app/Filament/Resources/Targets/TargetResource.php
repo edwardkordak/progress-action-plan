@@ -19,7 +19,7 @@ class TargetResource extends Resource
     protected static ?string $model = Target::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
-
+    protected static string|\UnitEnum|null $navigationGroup = 'Data Management';
     protected static ?string $recordTitleAttribute = 'Target';
 
     public static function form(Schema $schema): Schema
