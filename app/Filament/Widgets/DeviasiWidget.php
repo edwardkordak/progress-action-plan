@@ -17,12 +17,12 @@ class DeviasiWidget extends StatsOverviewWidget
 
     protected function getStats(): array
     {
-        // Ambil filter dari Dashboard
+        // ===== Filters dari dashboard =====
         $startDate = $this->filters['startDate'] ?? null;
         $endDate   = $this->filters['endDate']   ?? null;
         $packageId = $this->filters['package_id'] ?? null;
 
-        // Baseline awal + akumulasi sebelum startDate
+        // ===== Baseline target sebelum periode =====
         $baseline = 15.73;
         if ($startDate) {
             $baseline += Target::query()
@@ -31,26 +31,77 @@ class DeviasiWidget extends StatsOverviewWidget
                 ->sum('bobot');
         }
 
-        // Data dalam rentang
-        $q = Target::query()->orderBy('tanggal');
-        if ($packageId) $q->where('packages_id', $packageId);
-        if ($startDate) $q->whereDate('tanggal', '>=', $startDate);
-        if ($endDate)   $q->whereDate('tanggal', '<=', $endDate);
+        // ===== Ambil data target dalam rentang =====
+        $tq = Target::query()->orderBy('tanggal');
+        if ($packageId) $tq->where('packages_id', $packageId);
+        if ($startDate) $tq->whereDate('tanggal', '>=', $startDate);
+        if ($endDate)   $tq->whereDate('tanggal', '<=', $endDate);
 
-        $rows = $q->get(['tanggal', 'bobot']);
+        $rows = $tq->get(['tanggal', 'bobot']);
 
-        // Series kumulatif untuk sparkline
-        $series = [];
-        $cum = $baseline;
+        // Series kumulatif TARGET untuk sparkline + nilai terakhir
+        $seriesTarget = [];
+        $cumTarget = $baseline;
         foreach ($rows as $r) {
-            $cum += (float) $r->bobot;
-            $series[] = round($cum, 2);
+            $cumTarget += (float) $r->bobot;
+            $seriesTarget[] = round($cumTarget, 3);
+        }
+        $lastTarget = !empty($seriesTarget) ? end($seriesTarget) : round($baseline, 3);
+
+        // ====== REALISASI MANUAL (tanpa carry-forward) ======
+        // Format: 'YYYY-MM-DD' => persen kumulatif (decimal)
+        $manualRealisasi = [
+            '2025-08-25' => 18.770,
+            '2025-08-26' => 18.770,
+            '2025-08-27' => 18.770,
+            '2025-08-28' => 20.120,
+            '2025-08-29' => 20.120,
+            '2025-08-30' => 20.120,
+            '2025-08-31' => 20.120,
+            '2025-09-01' => 20.120,
+            '2025-09-02' => 20.120,
+            '2025-09-03' => 20.120,
+            '2025-09-04' => 20.739,
+            '2025-09-05' => 20.739,
+            '2025-09-06' => 20.790,
+            '2025-09-07' => 20.790,
+            '2025-09-08' => 20.790,
+            '2025-09-09' => 21.700,
+            '2025-09-10' => 21.700,
+            '2025-09-11' => 21.700,
+            '2025-09-12' => 21.700,
+            '2025-09-13' => 21.700,
+            '2025-09-14' => 21.700,
+            '2025-09-15' => 21.700,
+        ];
+
+        // Susun seri Realisasi mengikuti tanggal data target (tanpa carry-forward)
+        $labelDates = $rows->pluck('tanggal')->map(fn ($t) => \Carbon\Carbon::parse($t)->toDateString())->values();
+        $seriesReal = [];
+        foreach ($labelDates as $d) {
+            $seriesReal[] = array_key_exists($d, $manualRealisasi)
+                ? round((float) $manualRealisasi[$d], 3)
+                : null; // null jika tidak ada data
         }
 
-        // Nilai Realisasi terakhir (atau baseline jika kosong)
-        $realisasi = ! empty($series) ? end($series) : round($baseline, 2);
+        // Cari nilai realisasi terakhir yang tidak null dalam rentang
+        $lastReal = null;
+        for ($i = count($seriesReal) - 1; $i >= 0; $i--) {
+            if ($seriesReal[$i] !== null) {
+                $lastReal = $seriesReal[$i];
+                break;
+            }
+        }
+        // Jika seluruh rentang kosong, coba ambil nilai manual terakhir sebelum startDate (opsional)
+        if ($lastReal === null && $startDate) {
+            $prevKeys = array_keys(array_filter($manualRealisasi, fn ($v, $k) => $k < $startDate, ARRAY_FILTER_USE_BOTH));
+            if (!empty($prevKeys)) {
+                $lastKey = end($prevKeys);
+                $lastReal = round((float) $manualRealisasi[$lastKey], 3);
+            }
+        }
 
-        // Periode untuk deskripsi
+        // ===== Periode (untuk description) =====
         $from = $startDate ?? optional($rows->first())->tanggal;
         $to   = $endDate   ?? optional($rows->last())->tanggal;
         $period = null;
@@ -60,34 +111,44 @@ class DeviasiWidget extends StatsOverviewWidget
             $period  = "{$fromStr} – {$toStr}";
         }
 
-        $fmt = fn ($v) => Number::format($v) . '%';
+        // ===== Formatting dan deviasi =====
+        $fmt = fn ($v) => \Illuminate\Support\Number::format($v) . '%';
+
+        $hasReal = $lastReal !== null;
+        $dev     = $hasReal ? round($lastReal - $lastTarget, 3) : null;
+        $devFmt  = $dev !== null ? $fmt($dev) : 'Belum Ada';
+
+        $devPos  = $dev !== null && $dev >= 0;
+        $devColor = $dev === null ? 'gray' : ($devPos ? 'success' : 'danger');
+        $devIcon  = $dev === null ? 'heroicon-o-minus' : ($devPos ? 'heroicon-o-arrow-trending-up' : 'heroicon-o-arrow-trending-down');
 
         return [
-            Stat::make('Target', $fmt($realisasi))
+            // ===== Kartu Target =====
+            Stat::make('Target', $fmt($lastTarget))
                 ->description($period ? "{$period}" : 'Periode aktif')
                 ->descriptionIcon('heroicon-o-calendar')
-                ->chart(! empty($series) ? $series : [$realisasi]) // sparkline
+                ->chart(!empty($seriesTarget) ? $seriesTarget : [$lastTarget])
                 ->icon('heroicon-o-check-badge')
                 ->color('info')
                 ->extraAttributes(['class' => 'rounded-2xl']),
 
-                
-            Stat::make('Realisasi', 'Belum Ada')
+            // ===== Kartu Realisasi =====
+            Stat::make('Realisasi', $hasReal ? $fmt($lastReal) : 'Belum Ada')
                 ->description($period ? "{$period}" : 'Periode aktif')
-                ->descriptionIcon('heroicon-o-calendar')
                 ->descriptionIcon('heroicon-o-flag')
-                ->chart([15.73, 100]) // sparkline sederhana
-                ->color('success')
+                // null dibiarkan untuk putus; kalau mau mulus, ganti null dengan last-known.
+                ->chart(!empty($seriesReal) ? array_map(fn ($v) => $v, $seriesReal) : ($hasReal ? [$lastReal] : [0]))
                 ->icon('heroicon-o-flag')
+                ->color($hasReal ? 'success' : 'gray')
                 ->extraAttributes(['class' => 'rounded-2xl']),
 
             // ===== Kartu Deviasi =====
-            Stat::make('Deviasi','Belum Ada')
+            Stat::make('Deviasi', $devFmt)
                 ->description($period ? "{$period}" : 'Periode aktif')
-                ->descriptionIcon('heroicon-o-arrow-trending-down')
-                ->chart([15.73, 100]) 
-                ->color('danger')
-                ->icon('heroicon-o-exclamation-triangle')
+                ->descriptionIcon($devIcon)
+                ->chart($dev !== null ? [$dev < 0 ? 0 : $dev / 2, $dev] : [0, 0]) // sparkline sederhana
+                ->color($devColor)
+                ->icon('heroicon-o-scale')
                 ->extraAttributes(['class' => 'rounded-2xl']),
         ];
     }
