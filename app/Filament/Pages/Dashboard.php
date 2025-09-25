@@ -23,7 +23,6 @@ class Dashboard extends BaseDashboard
     {
         return [
             DeviasiWidget::class,
-            // BarChart::class,
             LineChart::class,
             SubmissionMatrixTable::class,
            
