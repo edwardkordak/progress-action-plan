@@ -44,7 +44,7 @@ class DeviasiWidget extends StatsOverviewWidget
         $cumTarget = $baseline;
         foreach ($rows as $r) {
             $cumTarget += (float) $r->bobot;
-            $seriesTarget[] = round($cumTarget, 3);
+            $seriesTarget[] = round($cumTarget, 1);
         }
         $lastTarget = !empty($seriesTarget) ? end($seriesTarget) : round($baseline, 3);
 
@@ -80,7 +80,7 @@ class DeviasiWidget extends StatsOverviewWidget
         $seriesReal = [];
         foreach ($labelDates as $d) {
             $seriesReal[] = array_key_exists($d, $manualRealisasi)
-                ? round((float) $manualRealisasi[$d], 3)
+                ? round((float) $manualRealisasi[$d], 1)
                 : null; // null jika tidak ada data
         }
 
@@ -97,7 +97,7 @@ class DeviasiWidget extends StatsOverviewWidget
             $prevKeys = array_keys(array_filter($manualRealisasi, fn ($v, $k) => $k < $startDate, ARRAY_FILTER_USE_BOTH));
             if (!empty($prevKeys)) {
                 $lastKey = end($prevKeys);
-                $lastReal = round((float) $manualRealisasi[$lastKey], 3);
+                $lastReal = round((float) $manualRealisasi[$lastKey], 1);
             }
         }
 
@@ -115,7 +115,7 @@ class DeviasiWidget extends StatsOverviewWidget
         $fmt = fn ($v) => \Illuminate\Support\Number::format($v) . '%';
 
         $hasReal = $lastReal !== null;
-        $dev     = $hasReal ? round($lastReal - $lastTarget, 3) : null;
+        $dev     = $hasReal ? round($lastReal - $lastTarget, 1) : null;
         $devFmt  = $dev !== null ? $fmt($dev) : 'Belum Ada';
 
         $devPos  = $dev !== null && $dev >= 0;
@@ -129,7 +129,7 @@ class DeviasiWidget extends StatsOverviewWidget
                 ->descriptionIcon('heroicon-o-calendar')
                 ->chart(!empty($seriesTarget) ? $seriesTarget : [$lastTarget])
                 ->icon('heroicon-o-check-badge')
-                ->color('info')
+                ->color('target')
                 ->extraAttributes(['class' => 'rounded-2xl']),
 
             // ===== Kartu Realisasi =====
@@ -139,7 +139,7 @@ class DeviasiWidget extends StatsOverviewWidget
                 // null dibiarkan untuk putus; kalau mau mulus, ganti null dengan last-known.
                 ->chart(!empty($seriesReal) ? array_map(fn ($v) => $v, $seriesReal) : ($hasReal ? [$lastReal] : [0]))
                 ->icon('heroicon-o-flag')
-                ->color($hasReal ? 'success' : 'gray')
+                ->color('realisasi')
                 ->extraAttributes(['class' => 'rounded-2xl']),
 
             // ===== Kartu Deviasi =====

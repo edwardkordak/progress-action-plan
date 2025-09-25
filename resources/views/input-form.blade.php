@@ -144,7 +144,7 @@
         <div class="card shadow-sm hero">
             <div class="ratio ratio-hero">
                 <!-- HAPUS 'contain' jika ingin crop agar benar-benar penuh -->
-                <img src="/images/banner-ppp.png" alt="Banner" class="hero-img" />
+                <img src="{{ asset('images/pemantauan.png') }}" alt="Banner" class="hero-img" />
             </div>
             <div class="p-4">
 

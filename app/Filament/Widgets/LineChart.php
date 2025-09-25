@@ -71,10 +71,9 @@ class LineChart extends ChartWidget
             '2025-09-15' => 21.700,
         ];
 
-        // Selaraskan ke label TANPA carry-forward (isi null kalau tidak ada data)
         $realisasiSeries = [];
         foreach ($labelDates as $d) {
-            $key = (string) $d; // 'Y-m-d'
+            $key = (string) $d; 
             $realisasiSeries[] = array_key_exists($key, $manualRealisasi)
                 ? round(max(0, min(100, (float) $manualRealisasi[$key])), 3)
                 : null;
