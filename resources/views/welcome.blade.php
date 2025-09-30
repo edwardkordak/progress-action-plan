@@ -20,8 +20,6 @@
     <div class="container my-2 my-md-3">
 
         <!-- Banner -->
-
-
         <div class="card shadow-sm mx-auto" style="max-width: 720px; ">
             <div class="banner"></div>
             <div class="card-body p-3 p-md-4">
