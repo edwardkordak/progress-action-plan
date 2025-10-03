@@ -17,7 +17,7 @@ use Filament\Tables\Enums\FiltersLayout;
 class SubmissionMatrixTable extends BaseWidget
 {
     use InteractsWithPageFilters;
-
+    protected static ?int $sort = 4;
     protected static ?string $heading = 'Rincian Submission Harian';
     protected int|string|array $columnSpan = 'full';
 

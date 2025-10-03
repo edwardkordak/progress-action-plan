@@ -3,32 +3,22 @@
 namespace App\Filament\Pages;
 
 use App\Models\Package;
+use Filament\Pages\Page;
 use Filament\Schemas\Schema;
-use App\Filament\Widgets\BarChart;
-use App\Filament\Widgets\DeviasiWidget;
 use App\Filament\Widgets\LineChart;
-use App\Filament\Widgets\SubmissionMatrixTable;
 use Filament\Forms\Components\Select;
+use App\Filament\Widgets\DeviasiWidget;
 use Filament\Schemas\Components\Section;
 use Filament\Forms\Components\DatePicker;
+use App\Filament\Widgets\DeviasiTableWidget;
 use Filament\Pages\Dashboard as BaseDashboard;
 use Filament\Pages\Dashboard\Concerns\HasFiltersForm;
 
-
 class Dashboard extends BaseDashboard
 {
+    // protected string $view = 'filament.pages.dashboard';
+
     use HasFiltersForm;
-
-    public function getWidgets(): array
-    {
-        return [
-            DeviasiWidget::class,
-            LineChart::class,
-            SubmissionMatrixTable::class,
-           
-        ];
-    }
-
 
     public function filtersForm(Schema $schema): Schema
     {
@@ -51,7 +41,7 @@ class Dashboard extends BaseDashboard
                         DatePicker::make('endDate')
                             ->label('Tanggal Selesai')
                             ->live(),
-                        
+
                     ])
                     ->columns(3)
                     ->columnSpanFull(),

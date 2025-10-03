@@ -2,16 +2,20 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
+use App\Models\Ppk;
+use App\Models\Item;
 
+use App\Models\Unit;
 use App\Models\User;
 use App\Models\Satker;
-use App\Models\Ppk;
+use App\Models\Target;
+use League\Csv\Reader;
 use App\Models\Package;
 use App\Models\JobCategory;
-use App\Models\Unit;
-use App\Models\Item;
+use App\Models\DataSubmission;
+use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
+use App\Models\DataSubmissionDetail;
 
 class DatabaseSeeder extends Seeder
 {
@@ -48,14 +52,15 @@ class DatabaseSeeder extends Seeder
         $tree = [
             'SNVT PJPA' => [
                 'Irigasi dan Rawa' => [
-                    ['nama_paket' => 'Rehabilitasi Daerah Irigasi Dataran Kotamobagu', 
-                     'penyedia_jasa' => 'PT. Nihara Anugerah',
-                     'price' => 10000,
-                     'lokasi' => 'Kab. Bolaang Mongondow Timur',
+                    [
+                        'nama_paket' => 'Rehabilitasi Daerah Irigasi Dataran Kotamobagu',
+                        'penyedia_jasa' => 'PT. Nihara Anugerah',
+                        'price' => 19389321000,
+                        'lokasi' => 'Kab. Bolaang Mongondow Timur',
                     ],
                 ],
             ],
-     
+
         ];
 
         DB::transaction(function () use ($tree) {
@@ -69,62 +74,136 @@ class DatabaseSeeder extends Seeder
                     ]);
 
                     foreach ($packages as $pkg) {
-                        // Unik per PPK + nama_paket (sesuai unique index migration)
                         Package::firstOrCreate(
-                            ['ppk_id' => $ppk->id,
-                             'penyedia_jasa' => $pkg['penyedia_jasa'],
-                             'nama_paket' => $pkg['nama_paket']],
-                            ['price' => $pkg['price'] ?? 0,
-                             'satker_id' => $satker->id, 
-                             'lokasi' => $pkg['lokasi'] ?? null]
+                            [
+                                'ppk_id' => $ppk->id,
+                                'penyedia_jasa' => $pkg['penyedia_jasa'],
+                                'nama_paket' => $pkg['nama_paket']
+                            ],
+                            [
+                                'price' => $pkg['price'] ?? 0,
+                                'satker_id' => $satker->id,
+                                'lokasi' => $pkg['lokasi'] ?? null
+                            ]
                         );
                     }
                 }
             }
         });
 
-        // 3) Item per Paket & Jenis (dengan default satuan, optional)
-        $catsByCode    = JobCategory::pluck('id', 'code'); // ['GAL'=>1, 'PEM'=>2, 'FIN'=>3]
-        $defaultUnitId = Unit::where('symbol', 'm²')->orWhere('name', 'Meter Persegi')->value('id');
+        $catsByCode    = JobCategory::pluck('id', 'code');
+        $defaultUnitId = Unit::where('symbol', 'm²')
+            ->orWhere('name', 'Meter Persegi')
+            ->value('id');
 
         $catalog = [
-            'PESA' => ['Galian Tanah', 
-                      'Pengadaan dan Pemasangan Pasangan Batu Mortar Tipe N (1 PC: 4 PP)', 
-                      'Pekerjaan Plesteran',
-                      'Pekerjaan Siaran'],
-            'PEMBA' => ['Galian Tanah', 
-                      'Pengadaan dan Pemasangan Pasangan Batu Mortar Tipe N (1 PC: 4 PP)', 
-                      'Pekerjaan Plesteran',
-                      'Pekerjaan Siaran'],
-            'PELENG' => ['Galian Tanah', 
-                      'Pengadaan dan Pemasangan Pasangan Batu Mortar Tipe N (1 PC: 4 PP)', 
-                      'Pekerjaan Plesteran',
-                      'Pekerjaan Siaran'],
+            'PESA' => [
+                [
+                    'name'  => 'Galian Tanah',
+                    'price' => 17500,
+                    'unit'  => 2
+                ],
+                [
+                    'name'  => 'Pengadaan dan Pemasangan Pasangan Batu Mortar Tipe N (1 PC: 4 PP)',
+                    'price' => 1098000,
+                    'unit'  => 2
+                ],
+                [
+                    'name'  => 'Pekerjaan Plesteran',
+                    'price' => 70200,
+                    'unit'  => 1
+                ],
+                [
+                    'name'  => 'Pekerjaan Siaran',
+                    'price' => 72800,
+                    'unit'  => 1
+                ],
+            ],
+            'PEMBA' => [
+                [
+                    'name'  => 'Galian Tanah',
+                    'price' => 17500,
+                    'unit' => 2
+                ],
+                [
+                    'name'  => 'Pengadaan dan Pemasangan Pasangan Batu Mortar Tipe N (1 PC: 4 PP)',
+                    'price' => 1098000,
+                    'unit'  => 2
+                ],
+                [
+                    'name'  => 'Pekerjaan Plesteran',
+                    'price' => 70200,
+                    'unit'  => 1
+                ],
+                [
+                    'name'  => 'Pekerjaan Siaran',
+                    'price' => 72800,
+                    'unit'  => 1
+                ],
+            ],
+            'PELENG' => [
+                [
+                    'name'  => 'Galian Tanah',
+                    'price' => 17500,
+                    'unit'  => 2
+                ],
+                [
+                    'name'  => 'Pengadaan dan Pemasangan Pasangan Batu Mortar Tipe N (1 PC: 4 PP)',
+                    'price' => 1098000,
+                    'unit'  => 2
+                ],
+                [
+                    'name'  => 'Pekerjaan Plesteran',
+                    'price' => 70200,
+                    'unit'  => 1
+                ],
+                [
+                    'name'  => 'Pekerjaan Siaran',
+                    'price' => 72800,
+                    'unit'  => 1
+                ],
+            ],
         ];
 
         foreach (Package::cursor() as $pkg) {
-            foreach ($catalog as $code => $names) {
+            foreach ($catalog as $code => $items) {
                 $catId = $catsByCode[$code] ?? null;
                 if (!$catId) {
                     continue;
                 }
 
-                foreach ($names as $name) {
+                foreach ($items as $item) {
                     Item::firstOrCreate(
                         [
                             'package_id'      => $pkg->id,
                             'job_category_id' => $catId,
-                            'name'            => $name,
-                            'price'          => rand(100000, 5000000), 
+                            'name'            => $item['name'],
                         ],
                         [
-                            'default_unit_id' => $defaultUnitId, // boleh null jika tidak mau default
+                            'price'           => $item['price'],
+                            'default_unit_id' => $item['unit'],
                         ]
                     );
                 }
             }
         }
 
+
         $this->command?->info('Seeding selesai: JobCategories, Units, Satker/PPK/Packages, Items.');
+
+        // Baca file CSV dari folder database/seeders/csv/targets.csv (buat folder sendiri)
+        $csv = Reader::createFromPath(database_path('seeders/targets.csv'), 'r');
+        $csv->setHeaderOffset(0); // Baris pertama jadi header
+
+        $package = Package::first(); // atau cari berdasarkan nama_paket
+        $packageId = $package->id;
+
+        foreach ($csv as $record) {
+            Target::create([
+                'bobot'       => $record['bobot'],
+                'tanggal'     => $record['tanggal'],
+                'packages_id' => $packageId,
+            ]);
+        }
     }
 }
