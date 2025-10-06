@@ -155,7 +155,7 @@
                     <div class="step" data-step="2"><span class="bubble">2</span><span class="label"
                             id="lblStep2">Saluran</span></div>
                     <div class="step" data-step="3"><span class="bubble">3</span><span class="label"
-                            id="lblStep3">Bangunan dan Sadap</span></div>
+                            id="lblStep3">Bangunan Sadap</span></div>
                     <div class="step" data-step="4"><span class="bubble">4</span><span class="label"
                             id="lblStep4">Bangunan Pelengkap</span></div>
                 </div>
@@ -263,8 +263,10 @@
                     const n = Number(s.dataset.step);
                     s.classList.toggle('active', n === step);
                     s.classList.toggle('done', n < step);
+                    // hilangkan error mark
+                    s.classList.remove('text-danger');
                 });
-                progressEl.style.width = `${(step-1)/(total-1)*100}%`;
+                progressEl.style.width = `${(step - 1) / (total - 1) * 100}%`;
                 stepHint.textContent = `Langkah ${step} dari ${total}`;
                 qs('#btnPrev').disabled = (step === 1);
                 if (step === total) {
@@ -276,7 +278,7 @@
                 }
             }
 
-            // validasi field required dalam 1 step
+            // ✅ Validasi field required per step (skip readonly/disabled)
             function validateStep(step) {
                 const sec = document.querySelector(`section[data-page="${step}"]`);
                 if (!sec) return true;
@@ -285,6 +287,7 @@
                     first = null;
                 req.forEach(el => {
                     el.classList.remove('is-invalid');
+                    if (el.readOnly || el.disabled) return; // lewati readonly/disabled
                     const empty = (el.tagName === 'SELECT') ? (el.value === '') :
                         (el.type === 'number') ? (el.value === '' || isNaN(+el.value)) :
                         (el.value.trim() === '');
@@ -303,6 +306,9 @@
                         preventScroll: true
                     });
                 }
+                // tandai step yang error
+                const stepEl = document.querySelector(`.step[data-step="${step}"]`);
+                if (stepEl) stepEl.classList.toggle('text-danger', !ok);
                 return ok;
             }
 
@@ -312,7 +318,6 @@
                 paketEl = qs('#paket'),
                 lokasiEl = qs('#lokasi_auto');
 
-            // === Penyedia Jasa (readonly + sinkron ke hidden kalau ada) ===
             const penyediaEl = qs('#penyedia_jasa_auto');
             const setPenyedia = (val = '') => {
                 if (penyediaEl) penyediaEl.value = val || '';
@@ -334,7 +339,6 @@
                 return r.json();
             };
 
-            // builder khusus paket: selipkan lokasi & penyedia_jasa sebagai data-attribute
             const fillPaketSelect = (el, list) => {
                 clearSelect(el, '-- Pilih Paket --', false);
                 list.forEach(it => {
@@ -346,8 +350,6 @@
                     el.appendChild(o);
                 });
             };
-
-            // generic untuk PPK
             const fillPPKSelect = (el, list) => {
                 clearSelect(el, '-- Pilih PPK --', false);
                 list.forEach(it => {
@@ -394,7 +396,7 @@
 
                 try {
                     const pkgs = await fetchJson(`/api/packages?satker_id=${sid}&ppk_id=${pid}`);
-                    fillPaketSelect(paketEl, pkgs); // ← berisi data-lokasi & data-penyedia-jasa
+                    fillPaketSelect(paketEl, pkgs);
                 } catch {
                     clearSelect(paketEl, '⚠️ Gagal memuat Paket', true);
                 }
@@ -408,7 +410,6 @@
                 const pkg = paketEl.value;
                 if (!pkg) return;
 
-                // Ambil langsung dari <option> terpilih (tanpa fetch /api/package/{id})
                 const opt = paketEl.selectedOptions[0];
                 if (opt) {
                     lokasiEl.value = opt.dataset.lokasi || '';
@@ -454,14 +455,13 @@
                 });
             }
 
-            // tampilkan semua item (Volume & Satuan REQUIRED)
             function renderCategoryFixed(container, cat, idx, pkgId) {
                 container.innerHTML = `
-                                        <div class="mb-2"><h2 class="h6 mb-2">Jenis: ${cat.name}</h2></div>
-                                        <input type="hidden" name="details[${idx}][category_id]" value="${cat.id}">
-                                        <div class="item-list" data-list></div>
-                                        <div class="alert alert-info d-none mt-2" data-empty>Belum ada item pekerjaan untuk jenis ini.</div>
-                                     `;
+            <div class="mb-2"><h2 class="h6 mb-2">Jenis: ${cat.name}</h2></div>
+            <input type="hidden" name="details[${idx}][category_id]" value="${cat.id}">
+            <div class="item-list" data-list></div>
+            <div class="alert alert-info d-none mt-2" data-empty>Belum ada item pekerjaan untuk jenis ini.</div>
+        `;
                 const list = container.querySelector('[data-list]'),
                     empty = container.querySelector('[data-empty]');
 
@@ -488,13 +488,9 @@
                           </div>
                           <div class="col-12 col-md-4 col-lg-4">
                             <label class="form-label">Satuan</label>
-                            <!-- Tampilkan label satuan (readonly) -->
-                            <input class="form-control"
-                                   name="details[${idx}][rows][${rowIdx}][satuan_label]"
+                            <input class="form-control" name="details[${idx}][rows][${rowIdx}][satuan_label]"
                                    value="${unitText}" readonly required>
-                            <!-- Kirim ID satuan ke server -->
-                            <input type="hidden"
-                                   name="details[${idx}][rows][${rowIdx}][satuan_id]"
+                            <input type="hidden" name="details[${idx}][rows][${rowIdx}][satuan_id]"
                                    value="${unitId}">
                             ${unitId ? "" : `<div class="text-danger small mt-1">Satuan default belum diset pada item ini.</div>`}
                           </div>
@@ -514,7 +510,7 @@
                     });
             }
 
-            /* nav */
+            /* navigasi antar step */
             document.getElementById('btnPrev').addEventListener('click', () => goto(Math.max(1, current - 1)));
 
             document.getElementById('btnNext').addEventListener('click', () => {
@@ -560,7 +556,6 @@
                         return;
                     }
                 }
-                // optional: pastikan ada minimal satu item-card total
                 if (document.querySelectorAll('.item-card').length === 0) {
                     e.preventDefault();
                     Swal.fire({
@@ -583,6 +578,7 @@
             @endif
         })();
     </script>
+
 
 </body>
 

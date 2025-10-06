@@ -191,17 +191,21 @@ class DatabaseSeeder extends Seeder
 
         $this->command?->info('Seeding selesai: JobCategories, Units, Satker/PPK/Packages, Items.');
 
-        // Baca file CSV dari folder database/seeders/csv/targets.csv (buat folder sendiri)
-        $csv = Reader::createFromPath(database_path('seeders/targets.csv'), 'r');
-        $csv->setHeaderOffset(0); // Baris pertama jadi header
 
-        $package = Package::first(); // atau cari berdasarkan nama_paket
+        $csv = Reader::createFromPath(database_path('seeders/targets.csv'), 'r');
+        $csv->setHeaderOffset(0);
+
+        $package   = Package::first();
         $packageId = $package->id;
 
         foreach ($csv as $record) {
+            if (empty($record['bobot']) || empty($record['tanggal'])) {
+                continue;
+            }
+
             Target::create([
-                'bobot'       => $record['bobot'],
-                'tanggal'     => $record['tanggal'],
+                'bobot'       => (float) $record['bobot'],   
+                'tanggal'     => $record['tanggal'],         
                 'packages_id' => $packageId,
             ]);
         }

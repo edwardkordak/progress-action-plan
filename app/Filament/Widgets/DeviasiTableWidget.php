@@ -130,8 +130,8 @@ class DeviasiTableWidget extends BaseWidget
         // === Urutkan terbaru di atas ===
         $rows = collect($rows)
             ->sortByDesc('tanggal')
-            ->take(10) // ambil 10 terakhir
-            ->sortByDesc('tanggal') // pastikan hari ini tetap di atas
+            ->take(10) 
+            ->sortByDesc('tanggal')
             ->values();
 
         return $table
