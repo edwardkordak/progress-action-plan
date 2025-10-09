@@ -97,8 +97,22 @@ class LineChart extends ChartWidget
                 return $bobot;
             });
 
-        // Submission dimulai dari baseline tetap (misalnya 30.82%)
-        $baselineSubmission = 30.82;
+        // Submission baseline juga dihitung otomatis dari tanggal sebelum start
+        $baselineSubmission = DataSubmission::with(['details.item', 'package'])
+            ->when($packageId, fn ($q) => $q->where('package_id', $packageId))
+            ->where('tanggal', '<', $startDate)
+            ->get()
+            ->sum(function ($sub) {
+                $packagePrice = $sub->package->price ?? 0;
+                if ($packagePrice == 0) return 0;
+                $bobot = 0;
+                foreach ($sub->details as $detail) {
+                    $price = $detail->item->price ?? 0;
+                    $volume = $detail->volume ?? 0;
+                    $bobot += ($volume * $price / $packagePrice) * 100;
+                }
+                return $bobot;
+            });
 
         // === KUMULATIF ===
         $targetSum = $baselineTarget;
