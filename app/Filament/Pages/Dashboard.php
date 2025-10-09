@@ -19,7 +19,7 @@ class Dashboard extends BaseDashboard
     // protected string $view = 'filament.pages.dashboard';
 
     use HasFiltersForm;
-
+      protected static ?string $title = 'PROGRES FISIK TA 2025';
     public function filtersForm(Schema $schema): Schema
     {
         return $schema

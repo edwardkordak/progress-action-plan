@@ -11,16 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('items', function (Blueprint $t) {
+        Schema::create('data_targets', function (Blueprint $t) {
             $t->id();
+            $t->foreignId('satker_id')->constrained('satkers')->cascadeOnDelete();
+            $t->foreignId('ppk_id')->constrained('ppks')->cascadeOnDelete();
             $t->foreignId('package_id')->constrained('packages')->cascadeOnDelete();
-            $t->foreignId('job_category_id')->constrained('job_categories')->cascadeOnDelete();
-            $t->string('name');
-            $t->decimal('volume', 16, 2);
-            $t->bigInteger('price');
-            $t->foreignId('default_unit_id')->nullable()->constrained('units')->nullOnDelete();
+            $t->date('tanggal');
             $t->timestamps();
-            $t->unique(['package_id', 'job_category_id', 'name']);
+            $t->index(['satker_id', 'ppk_id', 'package_id']);
         });
     }
 
@@ -29,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('items');
+        Schema::dropIfExists('data_targets');
     }
 };

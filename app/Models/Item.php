@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 // app/Models/Item.php
 class Item extends Model
 {
-    protected $fillable = ['package_id', 'job_category_id', 'name', 'price','default_unit_id'];
+    protected $fillable = ['package_id', 'job_category_id', 'name','volume', 'price','default_unit_id'];
     
     public function package()
     {

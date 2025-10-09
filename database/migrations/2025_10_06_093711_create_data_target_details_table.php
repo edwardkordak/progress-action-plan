@@ -11,17 +11,16 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('data_submission_details', function (Blueprint $t) {
+        Schema::create('data_target_details', function (Blueprint $t) {
             $t->id();
-            $t->foreignId('data_submission_id')->constrained('data_submissions')->cascadeOnDelete();
+            $t->foreignId('data_target_id')->constrained('data_targets')->cascadeOnDelete();
             $t->foreignId('job_category_id')->constrained('job_categories')->cascadeOnDelete();
             $t->foreignId('item_id')->constrained('items')->cascadeOnDelete();
             $t->decimal('volume', 16, 2)->nullable();
             $t->foreignId('satuan_id')->nullable()->constrained('units')->nullOnDelete();
             $t->text('keterangan')->nullable();
             $t->timestamps();
-
-            $t->unique(['data_submission_id', 'item_id']);
+            $t->unique(['data_target_id', 'item_id']);
             $t->index(['job_category_id', 'item_id']);
         });
     }
@@ -31,6 +30,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('data_submission_details');
+        Schema::dropIfExists('data_target_details');
     }
 };

@@ -4,147 +4,162 @@ namespace App\Filament\Widgets;
 
 use App\Models\DataSubmission;
 use App\Models\DataSubmissionDetail;
-use App\Models\JobCategory;
 use Filament\Widgets\TableWidget as BaseWidget;
 use Filament\Widgets\Concerns\InteractsWithPageFilters;
-use Illuminate\Database\Eloquent\Builder;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Grouping\Group;
-use Filament\Tables\Filters\SelectFilter;
-use Filament\Tables\Enums\FiltersLayout;
+use Filament\Tables\Columns\Layout\Panel;
+use Illuminate\Database\Eloquent\Builder;
+use Carbon\Carbon;
 
 class SubmissionMatrixTable extends BaseWidget
 {
     use InteractsWithPageFilters;
+
     protected static ?int $sort = 4;
-    protected static ?string $heading = 'Rincian Submission Harian';
+    protected static ?string $heading = 'Rekap Submission Harian';
     protected int|string|array $columnSpan = 'full';
-
-    protected function scopedQuery(): Builder
-    {
-        $q = DataSubmissionDetail::query()
-            ->with(['submission', 'satuan', 'item', 'jobCategory']);
-
-        if ($pid = $this->filters['package_id'] ?? null) {
-            $q->whereHas('submission', fn ($s) => $s->where('package_id', $pid));
-        }
-        if ($start = $this->filters['startDate'] ?? null) {
-            $q->whereHas('submission', fn ($s) => $s->whereDate('tanggal', '>=', $start));
-        }
-        if ($end = $this->filters['endDate'] ?? null) {
-            $q->whereHas('submission', fn ($s) => $s->whereDate('tanggal', '<=', $end));
-        }
-
-        return $q;
-    }
 
     protected function getTableQuery(): Builder
     {
-        return $this->scopedQuery()->orderBy(
-            DataSubmission::select('tanggal')
-                ->whereColumn('data_submissions.id', 'data_submission_details.data_submission_id')
-                ->limit(1)
-        );
-    }
+        $packageId = $this->filters['package_id'] ?? null;
+        $start = $this->filters['startDate'] ?? null;
+        $end = $this->filters['endDate'] ?? null;
 
-    protected function getTableFilters(): array
-    {
-        $itemOptions = [
-            'Galian Tanah' => 'Galian Tanah',
-            'Pekerjaan Plesteran' => 'Pekerjaan Plesteran',
-            'Pekerjaan Siaran' => 'Pekerjaan Siaran',
-            'Pengadaan dan Pemasangan Pasangan Batu Mortar Tipe N (1 PC: 4 PP)' =>
-            'Pengadaan dan Pemasangan Pasangan Batu Mortar Tipe N (1 PC: 4 PP)',
-        ];
-
-        return [
-            SelectFilter::make('job_category_id')
-                ->label('Kategori')
-                ->options(fn () => \App\Models\JobCategory::query()
-                    ->orderBy('sort_order')->orderBy('name')
-                    ->pluck('name', 'id')->all())
-                ->placeholder('All')
-                ->indicator('Kategori')
-                ->searchable()
-                ->preload()
-                ->native(false)
-                ->query(function (Builder $query, array $data) {
-                    $value = $data['value'] ?? null;
-                    if (filled($value)) {
-                        $query->where('data_submission_details.job_category_id', $value);
-                    }
-                }),
-
-            SelectFilter::make('item_name')
-                ->label('Item')
-                ->options($itemOptions)
-                ->placeholder('All')
-                ->indicator('Item')
-                ->searchable()
-                ->preload()
-                ->native(false)
-                ->query(function (Builder $query, array $data) {
-                    $name = $data['value'] ?? null;
-                    if (filled($name)) {
-                        $query->whereHas('item', fn ($iq) => $iq->where('name', $name));
-                    }
-                }),
-        ];
-    }
-
-    protected function getTableFiltersLayout(): ?string
-    {
-        return 'above-content';
-    }
-    protected function getTableGroups(): array
-    {
-        return [
-            Group::make('jobCategory.name')->label('Kategori')->collapsible(),
-            Group::make('item.name')->label('Item')->collapsible(),
-        ];
+        return DataSubmission::query()
+            ->with(['details.item', 'details.jobCategory'])
+            ->when($packageId, fn ($q) => $q->where('package_id', $packageId))
+            ->when($start, fn ($q) => $q->whereDate('tanggal', '>=', $start))
+            ->when($end, fn ($q) => $q->whereDate('tanggal', '<=', $end))
+            ->orderByDesc('tanggal');
     }
 
     protected function getTableColumns(): array
     {
         return [
-            TextColumn::make('submission.tanggal')
-                ->label('Tanggal')
-                ->date('d M Y')
-                ->sortable(),
 
-            TextColumn::make('jobCategory.name')
-                ->label('Kategori')
-                ->toggleable()
-                ->sortable(),
+            // === HEADER INFO ====================================================
+            TextColumn::make('header_info')
+                ->label('Informasi Submission')
+                ->html()
+                ->state(function ($record) {
+                    $tanggal = Carbon::parse($record->tanggal)->translatedFormat('d F Y');
+                    $jam = Carbon::parse($record->created_at)->translatedFormat('H:i');
+                    $nama = e($record->nama ?? '-');
+                    $package = e($record->package->nama_paket ?? '-');
+                    $jabatan = e($record->jabatan ?? '-');
 
-            TextColumn::make('item.name')
-                ->label('Item')
-                ->searchable()
-                ->toggleable()
-                ->limit(40),
+                    return "
+                    <div style='
+                        display: grid;
+                        grid-template-columns: 1fr 1fr 1fr;
+                        align-items: center;
+                        border: 1px solid var(--filament-color-gray-300);
+                        border-radius: 6px;
+                        background-color: var(--filament-color-gray-50);
+                        padding: 8px 12px;
+                        font-size: 13px;
+                        color: var(--filament-color-gray-900);
+                    '>
+                      <div style='color:var(--filament-color-gray-600);'>{$package}</div>
+                        <div style='font-weight:600; color:var(--filament-color-warning-600);'>📅 {$tanggal}</div>
+                        <div style='font-weight:500;'>⏰ {$jam}</div>
+                      
+                    </div>";
+                })
+                ->sortable(false)
+                ->alignLeft(),
 
-            TextColumn::make('volume')
-                ->label('Volume')
-                ->numeric(2)
-                ->alignRight(),
+            // === PANEL DETAIL ===================================================
+            Panel::make([
+                TextColumn::make('details_html')
+                    ->label('')
+                    ->html()
+                    ->state(function (DataSubmission $record) {
+                        $details = $record->details()->with(['jobCategory', 'item'])->get();
 
-            TextColumn::make('satuan.symbol')
-                ->label('Satuan')
-                ->placeholder(fn ($r) => optional($r->item?->defaultUnit)->symbol ?? '—'),
+                        if ($details->isEmpty()) {
+                            return '<p style="color:var(--filament-color-gray-500); font-size:13px;">Tidak ada rincian input untuk tanggal ini.</p>';
+                        }
 
-            TextColumn::make('keterangan')
-                ->label('Keterangan')
-                ->searchable()
-                ->limit(80)
-                ->wrap(),
+                        $grouped = $details->groupBy(fn ($d) => optional($d->jobCategory)->name ?? 'Tanpa Kategori');
+
+                        $html = '<div style="margin-top: 8px;">';
+                        foreach ($grouped as $catName => $rows) {
+                            $html .= "
+                            <div style='
+                                border: 1px solid var(--filament-color-gray-300);
+                                border-radius: 6px;
+                                background-color: var(--filament-color-gray-50);
+                                padding: 10px;
+                                margin-bottom: 16px;
+                            '>
+                                <div style='
+                                    font-weight: 600;
+                                    font-size: 14px;
+                                    color: var(--filament-color-primary-600);
+                                    margin-bottom: 6px;
+                                    border-bottom: 1px solid var(--filament-color-gray-200);
+                                    padding-bottom: 4px;
+                                '>{$catName}</div>
+
+                                <div style='overflow-x:auto;'>
+                                <table style='width:100%; border-collapse: collapse; font-size:13px; color:var(--filament-color-gray-900);'>
+                                    <thead style='background:var(--filament-color-gray-100);'>
+                                        <tr>
+                                            <th style='text-align:left; padding:6px 10px; width:35%;'>Item</th>
+                                            <th style='text-align:right; padding:6px 10px; width:13%;'>Harian</th>
+                                            <th style='text-align:right; padding:6px 10px; width:13%;'>Kumulatif</th>
+                                            <th style='text-align:right; padding:6px 10px; width:13%;'>Target</th>
+                                            <th style='text-align:right; padding:6px 10px; width:13%;'>Sisa</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>";
+
+                            foreach ($rows as $r) {
+                                $item = $r->item;
+                                $itemTarget = $item->volume ?? 0;
+                                $harian = $r->volume ?? 0;
+
+                                $kumulatif = DataSubmissionDetail::query()
+                                    ->whereHas('submission', function ($q) use ($record, $r) {
+                                        $q->where('package_id', $record->package_id)
+                                            ->whereDate('tanggal', '<=', $record->tanggal);
+                                    })
+                                    ->where('item_id', $r->item_id)
+                                    ->sum('volume');
+
+                                $sisa = $itemTarget - $kumulatif;
+                                $color = $sisa < 0
+                                    ? 'var(--filament-color-danger-600)'
+                                    : 'var(--filament-color-success-600)';
+
+                                $html .= "
+                                <tr style='border-bottom:1px solid var(--filament-color-gray-200);'>
+                                    <td style='padding:4px 10px;'>" . e($item->name) . "</td>
+                                    <td style='padding:4px 10px; text-align:right; font-family:monospace;'>" . number_format($harian, 2) . "</td>
+                                    <td style='padding:4px 10px; text-align:right; font-family:monospace;'>" . number_format($kumulatif, 2) . "</td>
+                                    <td style='padding:4px 10px; text-align:right; font-family:monospace;'>" . number_format($itemTarget, 2) . "</td>
+                                    <td style='padding:4px 10px; text-align:right; font-family:monospace; color:{$color}; font-weight:600;'>" . number_format($sisa, 2) . "</td>
+                                </tr>";
+                            }
+
+                            $html .= "</tbody></table></div></div>";
+                        }
+
+                        $html .= '</div>';
+                        return $html;
+                    }),
+            ])
+                ->collapsible()
+                ->collapsed(),
         ];
     }
 
     protected function getTableEmptyStateHeading(): ?string
     {
         return ($this->filters['package_id'] ?? null)
-            ? 'Tidak ada data untuk filter ini.'
+            ? 'Tidak ada data submission untuk filter ini.'
             : 'Pilih Paket terlebih dahulu.';
     }
 }
