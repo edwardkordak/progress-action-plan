@@ -122,20 +122,20 @@ class DeviasiWidget extends BaseWidget
 
         return [
             Stat::make('Target', $totalTarget . '%')
-                ->description('Bobot target')
+                ->description('Target Progres')
                   ->Icon('heroicon-m-arrow-trending-up')
                 ->chart($targetProgress)
                 ->color('target'),
 
             Stat::make('Realisasi', $totalSub . '%')
-                ->description('Bobot realisasi')
+                ->description('Progres Realisasi')
                 ->Icon('heroicon-m-arrow-trending-up')
                 ->chart($submissionProgress)
                 ->color('realisasi'),
 
             Stat::make('Deviasi', $deviasi . '%')
                 ->description('Realisasi - Target')
-                ->Icon('heroicon-m-arrow-trending-down')
+                // ->Icon('heroicon-m-arrow-trending-down')
                 ->chart(array_map(fn ($i) => round($submissionProgress[$i] - $targetProgress[$i], 2), array_keys($dates)))
                 ->color($deviasi >= 0 ? 'success' : 'danger'),
         ];
