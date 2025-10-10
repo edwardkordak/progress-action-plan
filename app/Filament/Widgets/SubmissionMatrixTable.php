@@ -17,7 +17,7 @@ class SubmissionMatrixTable extends BaseWidget
     use InteractsWithPageFilters;
 
     protected static ?int $sort = 4;
-    protected static ?string $heading = 'Rekap Submission Harian';
+    protected static ?string $heading = 'Rekap Progress';
     protected int|string|array $columnSpan = 'full';
 
     protected function getTableQuery(): Builder
@@ -45,30 +45,78 @@ class SubmissionMatrixTable extends BaseWidget
                 ->state(function ($record) {
                     $tanggal = Carbon::parse($record->tanggal)->translatedFormat('d F Y');
                     $jam = Carbon::parse($record->created_at)->translatedFormat('H:i');
-                    $nama = e($record->nama ?? '-');
                     $package = e($record->package->nama_paket ?? '-');
-                    $jabatan = e($record->jabatan ?? '-');
+                    $packageId = $record->package_id;
+                    $startDate = $record->tanggal;
 
+                    // === 1️⃣ Hitung bobot harian ===
+                    $packagePrice = $record->package->price ?? 0;
+                    $bobotHarian = 0;
+
+                    if ($packagePrice > 0) {
+                        foreach ($record->details as $detail) {
+                            $price = $detail->item->price ?? 0;
+                            $volume = $detail->volume ?? 0;
+                            $bobotHarian += ($volume * $price / $packagePrice) * 100;
+                        }
+                    }
+
+                    // === 2️⃣ Hitung baseline (tanggal sebelum startDate) ===
+                    $baselineSubmission = \App\Models\DataSubmission::with(['details.item', 'package'])
+                        ->where('package_id', $packageId)
+                        ->where('tanggal', '<', $startDate)
+                        ->get()
+                        ->sum(function ($sub) {
+                            $packagePrice = $sub->package->price ?? 0;
+                            if ($packagePrice == 0) return 0;
+
+                            $bobot = 0;
+                            foreach ($sub->details as $detail) {
+                                $price = $detail->item->price ?? 0;
+                                $volume = $detail->volume ?? 0;
+                                $bobot += ($volume * $price / $packagePrice) * 100;
+                            }
+                            return $bobot;
+                        });
+
+                    // === 3️⃣ Total kumulatif (baseline + harian sampai hari ini) ===
+                    $bobotKumulatif = round($baselineSubmission + $bobotHarian, 2);
+                    $bobotHarian = round($bobotHarian, 2);
+
+                    // Warna tampilan
+                    $colorHarian = $bobotHarian > 0
+                        ? 'var(--filament-color-success-600)'
+                        : 'var(--filament-color-gray-500)';
+                    $colorKumulatif = $bobotKumulatif > 0
+                        ? 'var(--filament-color-primary-600)'
+                        : 'var(--filament-color-gray-500)';
+
+                    // === 4️⃣ HTML tampilan header ===
                     return "
                     <div style='
-                        display: grid;
-                        grid-template-columns: 1fr 1fr 1fr;
-                        align-items: center;
-                        border: 1px solid var(--filament-color-gray-300);
-                        border-radius: 6px;
-                        background-color: var(--filament-color-gray-50);
-                        padding: 8px 12px;
-                        font-size: 13px;
-                        color: var(--filament-color-gray-900);
+                         display: grid;
+                         grid-template-columns: 1.3fr 1fr 0.7fr 0.6fr 0.6fr;
+                         align-items: center;
+                         border: 1px solid var(--filament-color-gray-300);
+                         border-radius: 6px;
+                         background-color: var(--filament-color-gray-50);
+                         padding: 8px 12px;
+                         font-size: 13px;
+                         color: var(--filament-color-gray-900);
                     '>
-                      <div style='color:var(--filament-color-gray-600);'>{$package}</div>
-                        <div style='font-weight:600; color:var(--filament-color-warning-600);'>📅 {$tanggal}</div>
-                        <div style='font-weight:500;'>⏰ {$jam}</div>
-                      
-                    </div>";
+                    <div style='color:var(--filament-color-gray-600);'>{$package}</div>
+                    <div style='font-weight:600; color:var(--filament-color-warning-600);'>📅 {$tanggal}</div>
+                    <div style='font-weight:500;'>⏰ {$jam}</div>
+  
+                    <div style='font-weight:700; color:{$colorKumulatif};'>
+                📈 {$bobotKumulatif}%
+                    </div>
+                </div>";
                 })
                 ->sortable(false)
                 ->alignLeft(),
+
+
 
             // === PANEL DETAIL ===================================================
             Panel::make([

@@ -8,6 +8,7 @@ class DataSubmission extends Model
 {
     protected $fillable = ['satker_id', 'ppk_id', 'package_id', 'nama', 'penyedia_jasa', 'jabatan', 'lokasi', 'tanggal'];
 
+    
     public function satker()
     {
         return $this->belongsTo(Satker::class);

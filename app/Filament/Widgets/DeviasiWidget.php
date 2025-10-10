@@ -18,7 +18,6 @@ class DeviasiWidget extends BaseWidget
 
     protected function getStats(): array
     {
-        // === RANGE TANGGAL ===
         $startDate = $this->filters['startDate']
             ? Carbon::parse($this->filters['startDate'])
             : Carbon::parse(DataTarget::min('tanggal') ?? now()->startOfMonth());
@@ -29,43 +28,11 @@ class DeviasiWidget extends BaseWidget
 
         $packageId = $this->filters['package_id'] ?? null;
 
-        // === TARGET HARIAN ===
-        $targets = DataTarget::with(['details.item', 'package'])
-            ->when($packageId, fn ($q) => $q->where('package_id', $packageId))
-            ->whereBetween('tanggal', [$startDate, $endDate])
-            ->get();
+        // === Buat range tanggal ===
+        $period = new \DatePeriod($startDate, new \DateInterval('P1D'), $endDate->copy()->addDay());
+        $dates = collect($period)->map(fn ($d) => $d->format('Y-m-d'))->toArray();
 
-        $totalTarget = 0;
-        foreach ($targets as $t) {
-            $pkgPrice = $t->package->price ?? 0;
-            if ($pkgPrice == 0) continue;
-
-            foreach ($t->details as $d) {
-                $price = $d->item->price ?? 0;
-                $volume = $d->volume ?? 0;
-                $totalTarget += ($volume * $price / $pkgPrice) * 100;
-            }
-        }
-
-        // === SUBMISSION HARIAN ===
-        $subs = DataSubmission::with(['details.item', 'package'])
-            ->when($packageId, fn ($q) => $q->where('package_id', $packageId))
-            ->whereBetween('tanggal', [$startDate, $endDate])
-            ->get();
-
-        $totalSub = 0;
-        foreach ($subs as $s) {
-            $pkgPrice = $s->package->price ?? 0;
-            if ($pkgPrice == 0) continue;
-
-            foreach ($s->details as $d) {
-                $price = $d->item->price ?? 0;
-                $volume = $d->volume ?? 0;
-                $totalSub += ($volume * $price / $pkgPrice) * 100;
-            }
-        }
-
-        // === BASELINE (otomatis dari data sebelum tanggal start) ===
+        // === Hitung baseline (data sebelum tanggal mulai) ===
         $baselineTarget = DataTarget::with(['details.item', 'package'])
             ->when($packageId, fn ($q) => $q->where('package_id', $packageId))
             ->where('tanggal', '<', $startDate)
@@ -73,7 +40,6 @@ class DeviasiWidget extends BaseWidget
             ->sum(function ($t) {
                 $pkgPrice = $t->package->price ?? 0;
                 if ($pkgPrice == 0) return 0;
-
                 $sum = 0;
                 foreach ($t->details as $d) {
                     $price = $d->item->price ?? 0;
@@ -90,7 +56,6 @@ class DeviasiWidget extends BaseWidget
             ->sum(function ($s) {
                 $pkgPrice = $s->package->price ?? 0;
                 if ($pkgPrice == 0) return 0;
-
                 $sum = 0;
                 foreach ($s->details as $d) {
                     $price = $d->item->price ?? 0;
@@ -100,28 +65,78 @@ class DeviasiWidget extends BaseWidget
                 return $sum;
             });
 
-        // Tambahkan baseline ke total
-        $totalTarget += $baselineTarget;
-        $totalSub += $baselineSub;
+        // === Ambil data target & submission ===
+        $targets = DataTarget::with(['details.item', 'package'])
+            ->when($packageId, fn ($q) => $q->where('package_id', $packageId))
+            ->whereBetween('tanggal', [$startDate, $endDate])
+            ->get();
 
-        // === DEVIASI ===
+        $subs = DataSubmission::with(['details.item', 'package'])
+            ->when($packageId, fn ($q) => $q->where('package_id', $packageId))
+            ->whereBetween('tanggal', [$startDate, $endDate])
+            ->get();
+
+        // === Hitung kumulatif harian ===
+        $targetProgress = [];
+        $submissionProgress = [];
+
+        $cumTarget = $baselineTarget;
+        $cumSub = $baselineSub;
+
+        foreach ($dates as $date) {
+            // Target harian
+            $dayTarget = $targets->where('tanggal', $date)->sum(function ($t) {
+                $pkgPrice = $t->package->price ?? 0;
+                if ($pkgPrice == 0) return 0;
+                $sum = 0;
+                foreach ($t->details as $d) {
+                    $price = $d->item->price ?? 0;
+                    $volume = $d->volume ?? 0;
+                    $sum += ($volume * $price / $pkgPrice) * 100;
+                }
+                return $sum;
+            });
+            $cumTarget += $dayTarget;
+            $targetProgress[] = round($cumTarget, 2);
+
+            // Submission harian
+            $daySub = $subs->where('tanggal', $date)->sum(function ($s) {
+                $pkgPrice = $s->package->price ?? 0;
+                if ($pkgPrice == 0) return 0;
+                $sum = 0;
+                foreach ($s->details as $d) {
+                    $price = $d->item->price ?? 0;
+                    $volume = $d->volume ?? 0;
+                    $sum += ($volume * $price / $pkgPrice) * 100;
+                }
+                return $sum;
+            });
+            $cumSub += $daySub;
+            $submissionProgress[] = round($cumSub, 2);
+        }
+
+        // === Total akhir dan deviasi ===
+        $totalTarget = end($targetProgress) ?: $baselineTarget;
+        $totalSub = end($submissionProgress) ?: $baselineSub;
         $deviasi = round($totalSub - $totalTarget, 2);
-
-        // Format angka dua desimal
-        $totalTarget = round($totalTarget, 2);
-        $totalSub = round($totalSub, 2);
 
         return [
             Stat::make('Target', $totalTarget . '%')
-                ->description('Total bobot target kumulatif')
+                ->description('Bobot target')
+                  ->Icon('heroicon-m-arrow-trending-up')
+                ->chart($targetProgress)
                 ->color('target'),
 
             Stat::make('Realisasi', $totalSub . '%')
-                ->description('Total bobot realisasi kumulatif')
+                ->description('Bobot realisasi')
+                ->Icon('heroicon-m-arrow-trending-up')
+                ->chart($submissionProgress)
                 ->color('realisasi'),
 
             Stat::make('Deviasi', $deviasi . '%')
                 ->description('Realisasi - Target')
+                ->Icon('heroicon-m-arrow-trending-down')
+                ->chart(array_map(fn ($i) => round($submissionProgress[$i] - $targetProgress[$i], 2), array_keys($dates)))
                 ->color($deviasi >= 0 ? 'success' : 'danger'),
         ];
     }
