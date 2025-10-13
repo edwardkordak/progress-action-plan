@@ -32,6 +32,8 @@ class DataSubmissionController extends Controller
             'package_id' => 'required|exists:packages,id',
             'nama'       => 'required|string|max:255',
             'jabatan'    => 'required|string|max:255',
+            // cuman tambahan sementara
+            'tanggal'    => 'required|date|before_or_equal:today',
 
             // DETAIL (banyak baris per kategori)
             'details'                        => 'required|array|min:1',
@@ -54,10 +56,12 @@ class DataSubmissionController extends Controller
                 'ppk_id'     => $data['ppk_id'],
                 'package_id' => $data['package_id'],
                 'nama'       => $data['nama'],
+                'tanggal'     => $data['tanggal'],
                 'penyedia_jasa' => $pkg->penyedia_jasa ?? '—',
                 'jabatan'    => $data['jabatan'],
                 'lokasi'     => $pkg->lokasi ?? '—',
-                'tanggal'    => now()->toDateString(), // server time
+          
+                // 'tanggal'    => now()->toDateString(), 
             ]);
 
             foreach ($data['details'] as $block) {

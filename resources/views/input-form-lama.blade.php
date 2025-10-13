@@ -209,10 +209,8 @@
                             </div>
                             <div class="col-12">
                                 <label class="form-label">Tanggal</label>
-                                <input type="date" class="form-control" id="tanggal" name="tanggal"
-                                    value="{{ now()->toDateString() }}" max="{{ now()->toDateString() }}" required>
+                                <input class="form-control" value="{{ now()->toDateString() }}" readonly>
                             </div>
-
                         </div>
                     </section>
 
@@ -293,21 +291,6 @@
                     const empty = (el.tagName === 'SELECT') ? (el.value === '') :
                         (el.type === 'number') ? (el.value === '' || isNaN(+el.value)) :
                         (el.value.trim() === '');
-                    // Validasi khusus untuk tanggal
-                    if (el.id === 'tanggal') {
-                        const today = new Date().toISOString().split('T')[0];
-                        if (el.value > today) {
-                            ok = false;
-                            first ??= el;
-                            el.classList.add('is-invalid');
-                            Swal.fire({
-                                icon: 'warning',
-                                title: 'Tanggal tidak valid',
-                                text: 'Tanggal tidak boleh melebihi hari ini.'
-                            });
-                        }
-                    }
-
                     if (empty) {
                         ok = false;
                         first ??= el;
