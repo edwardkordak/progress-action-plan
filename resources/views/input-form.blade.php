@@ -500,7 +500,7 @@
                         <div class="row g-2">
                           <div class="col-12 col-md-4">
                             <label class="form-label">Volume</label>
-                            <input type="number" step="0.01" min="0" class="form-control"
+                            <input type="number" step="0.0001" min="0" class="form-control"
                                    name="details[${idx}][rows][${rowIdx}][volume]" required>
                           </div>
                           <div class="col-12 col-md-4 col-lg-4">
