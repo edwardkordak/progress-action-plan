@@ -155,11 +155,12 @@ class SubmissionMatrixTable extends BaseWidget
                                 <table style='width:100%; border-collapse: collapse; font-size:13px; color:var(--filament-color-gray-900);'>
                                     <thead style='background:var(--filament-color-gray-100);'>
                                         <tr>
-                                            <th style='text-align:left; padding:6px 10px; width:35%;'>Item</th>
-                                            <th style='text-align:right; padding:6px 10px; width:13%;'>Harian</th>
-                                            <th style='text-align:right; padding:6px 10px; width:13%;'>Kumulatif</th>
-                                            <th style='text-align:right; padding:6px 10px; width:13%;'>Target</th>
-                                            <th style='text-align:right; padding:6px 10px; width:13%;'>Sisa</th>
+                                            <th style='text-align:left; padding:6px 10px; width:30%;'>Item</th>
+                                            <th style='text-align:left; padding:6px 10px; width:14%;'>Satuan</th>
+                                            <th style='text-align:right; padding:6px 10px; width:14%;'>Harian</th>
+                                            <th style='text-align:right; padding:6px 10px; width:14%;'>Kumulatif</th>
+                                            <th style='text-align:right; padding:6px 10px; width:14%;'>Target</th>
+                                            <th style='text-align:right; padding:6px 10px; width:14%;'>Sisa</th>
                                         </tr>
                                     </thead>
                                     <tbody>";
@@ -168,6 +169,7 @@ class SubmissionMatrixTable extends BaseWidget
                                 $item = $r->item;
                                 $itemTarget = $item->volume ?? 0;
                                 $harian = $r->volume ?? 0;
+                                // dd($item);
 
                                 $kumulatif = DataSubmissionDetail::query()
                                     ->whereHas('submission', function ($q) use ($record, $r) {
@@ -185,6 +187,8 @@ class SubmissionMatrixTable extends BaseWidget
                                 $html .= "
                                 <tr style='border-bottom:1px solid var(--filament-color-gray-200);'>
                                     <td style='padding:4px 10px;'>" . e($item->name) . "</td>
+                                    <td style='padding:4px 10px;'>" . e($item->defaultUnit->symbol) . "</td>
+                                
                                     <td style='padding:4px 10px; text-align:right; font-family:monospace;'>" . number_format($harian, 2) . "</td>
                                     <td style='padding:4px 10px; text-align:right; font-family:monospace;'>" . number_format($kumulatif, 2) . "</td>
                                     <td style='padding:4px 10px; text-align:right; font-family:monospace;'>" . number_format($itemTarget, 2) . "</td>
