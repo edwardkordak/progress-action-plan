@@ -12,4 +12,9 @@ class DataTargetDetail extends Model
      {
           return $this->belongsTo(Item::class);
      }
+
+     public function target()
+     {
+          return $this->belongsTo(DataTarget::class, 'data_target_id');
+     }
 }

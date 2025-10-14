@@ -2,15 +2,16 @@
 
 namespace App\Filament\Widgets;
 
-use App\Models\DataSubmission;
-use App\Models\DataSubmissionDetail;
-use Filament\Widgets\TableWidget as BaseWidget;
-use Filament\Widgets\Concerns\InteractsWithPageFilters;
+use Carbon\Carbon;
 use Filament\Tables;
+use App\Models\DataSubmission;
+use App\Models\DataTargetDetail;
+use App\Models\DataSubmissionDetail;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\Layout\Panel;
 use Illuminate\Database\Eloquent\Builder;
-use Carbon\Carbon;
+use Filament\Widgets\TableWidget as BaseWidget;
+use Filament\Widgets\Concerns\InteractsWithPageFilters;
 
 class SubmissionMatrixTable extends BaseWidget
 {
@@ -156,11 +157,13 @@ class SubmissionMatrixTable extends BaseWidget
                                     <thead style='background:var(--filament-color-gray-100);'>
                                         <tr>
                                             <th style='text-align:left; padding:6px 10px; width:30%;'>Item</th>
-                                            <th style='text-align:left; padding:6px 10px; width:14%;'>Satuan</th>
-                                            <th style='text-align:right; padding:6px 10px; width:14%;'>Harian</th>
-                                            <th style='text-align:right; padding:6px 10px; width:14%;'>Kumulatif</th>
-                                            <th style='text-align:right; padding:6px 10px; width:14%;'>Target</th>
-                                            <th style='text-align:right; padding:6px 10px; width:14%;'>Sisa</th>
+                                            <th style='text-align:left; padding:6px 10px; width:10%;'>Satuan</th>
+                                            <th style='text-align:left; padding:6px 10px; width:10%;'>Target Harian</th>
+                                            <th style='text-align:right; padding:6px 10px; width:10%;'>Realisasi Harian</th>
+                                            <th style='text-align:right; padding:6px 10px; width:10%;'>Deviasi Harian</th>
+                                            <th style='text-align:right; padding:6px 10px; width:10%;'>Progres Kumulatif</th>
+                                            <th style='text-align:right; padding:6px 10px; width:10%;'>Target Volume</th>
+                                            <th style='text-align:right; padding:6px 10px; width:10%;'>Deviasi</th>
                                         </tr>
                                     </thead>
                                     <tbody>";
@@ -169,7 +172,16 @@ class SubmissionMatrixTable extends BaseWidget
                                 $item = $r->item;
                                 $itemTarget = $item->volume ?? 0;
                                 $harian = $r->volume ?? 0;
-                                // dd($item);
+                                $targetHarian = optional(
+                                    DataTargetDetail::where('item_id', $r->item_id)
+                                        ->whereHas('target', function ($q) use ($record) {
+                                            $q->where('package_id', $record->package_id)
+                                                ->whereDate('tanggal', '<=', $record->tanggal);
+                                        })
+                                        ->latest('data_target_id')
+                                        ->first()
+                                )->volume ?? 0;
+
 
                                 $kumulatif = DataSubmissionDetail::query()
                                     ->whereHas('submission', function ($q) use ($record, $r) {
@@ -188,11 +200,13 @@ class SubmissionMatrixTable extends BaseWidget
                                 <tr style='border-bottom:1px solid var(--filament-color-gray-200);'>
                                     <td style='padding:4px 10px;'>" . e($item->name) . "</td>
                                     <td style='padding:4px 10px;'>" . e($item->defaultUnit->symbol) . "</td>
-                                
+                                    <td style='padding:4px 10px;'>" . number_format($targetHarian, 2) . "</td>
                                     <td style='padding:4px 10px; text-align:right; font-family:monospace;'>" . number_format($harian, 2) . "</td>
+                                    <td style='padding:4px 10px; text-align:right; font-family:monospace;'>" .number_format($targetHarian - $harian, 2) . "</td>
+
                                     <td style='padding:4px 10px; text-align:right; font-family:monospace;'>" . number_format($kumulatif, 2) . "</td>
                                     <td style='padding:4px 10px; text-align:right; font-family:monospace;'>" . number_format($itemTarget, 2) . "</td>
-                                    <td style='padding:4px 10px; text-align:right; font-family:monospace; color:{$color}; font-weight:600;'>" . number_format($sisa, 2) . "</td>
+                                    <td style='padding:4px 10px; text-align:right; font-family:monospace; color:{$color}; font-weight:600;'>" . "-" .number_format($sisa, 2) . "</td>
                                 </tr>";
                             }
 

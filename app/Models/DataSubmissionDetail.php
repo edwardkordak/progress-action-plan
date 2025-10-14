@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-// app/Models/DataSubmissionDetail.php
+
 class DataSubmissionDetail extends Model
 {
     protected $fillable = ['data_submission_id', 'job_category_id', 'item_id', 'volume', 'satuan_id', 'keterangan'];
