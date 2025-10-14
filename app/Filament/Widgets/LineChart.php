@@ -131,6 +131,13 @@ class LineChart extends ChartWidget
         // Label tanggal (format d M)
         $labels = array_map(fn ($d) => Carbon::parse($d)->format('d M'), $allDates);
 
+        if (empty($targetCumulative) && empty($submissionCumulative)) {
+            return [
+                'datasets' => [],
+                'labels' => [],
+            ];
+        }
+
         // === HASIL CHART ===
         return [
             'datasets' => [

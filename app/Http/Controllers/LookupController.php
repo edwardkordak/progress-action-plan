@@ -18,17 +18,31 @@ class LookupController extends Controller
 
     public function packages(Request $r)
     {
-        $r->validate(['satker_id' => 'required|exists:satkers,id', 
-                      'ppk_id' => 'required|exists:ppks,id']);
+        $r->validate([
+            'satker_id' => 'required|exists:satkers,id',
+            'ppk_id' => 'required|exists:ppks,id'
+        ]);
 
         return Package::where('satker_id', $r->satker_id)->where('ppk_id', $r->ppk_id)
             ->orderBy('nama_paket')->get(['id', 'penyedia_jasa', 'nama_paket', 'lokasi']);
     }
 
-    public function jobCategories()
+    public function jobCategories(Request $r)
     {
+        $packageId = $r->query('package_id');
+
+        if ($packageId) {
+            return JobCategory::whereHas('items', function ($q) use ($packageId) {
+                $q->where('package_id', $packageId);
+            })
+                ->orderBy('sort_order')
+                ->get(['id', 'code', 'name']);
+        }
+
+        // fallback jika tidak ada package_id
         return JobCategory::orderBy('sort_order')->get(['id', 'code', 'name']);
     }
+
 
     public function items(Request $r)
     {
