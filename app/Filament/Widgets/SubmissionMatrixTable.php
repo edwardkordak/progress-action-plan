@@ -153,15 +153,15 @@ class SubmissionMatrixTable extends BaseWidget
                                 '>{$catName}</div>
 
                                 <div style='overflow-x:auto;'>
-                                <table style='width:100%; border-collapse: collapse; font-size:13px; color:var(--filament-color-gray-900);'>
-                                    <thead style='background:var(--filament-color-gray-100);'>
+                                <table style='width:100%; border:solid 1px; font-size:13px; color:var(--filament-color-gray-900);'>
+                                    <thead style='background:var(--filament-color-gray-100); border:solid 1px;'>
                                         <tr>
-                                            <th style='text-align:left; padding:6px 10px; width:30%;'>Item</th>
-                                            <th style='text-align:left; padding:6px 10px; width:10%;'>Satuan</th>
+                                            <th style='text-align:left; padding:6px 10px; width:30%; border:solid 1px;'>Item</th>
+                                            <th style='text-align:left; padding:6px 10px; width:10%; border:solid 1px;'>Satuan</th>
                                             <th style='text-align:left; padding:6px 10px; width:10%;'>Target Harian</th>
                                             <th style='text-align:right; padding:6px 10px; width:10%;'>Realisasi Harian</th>
                                             <th style='text-align:right; padding:6px 10px; width:10%;'>Deviasi Harian</th>
-                                            <th style='text-align:right; padding:6px 10px; width:10%;'>Progres Kumulatif</th>
+                                            <th style='text-align:right; padding:6px 10px; width:10%; border-left:solid 1px;'>Volume Kumulatif</th>
                                             <th style='text-align:right; padding:6px 10px; width:10%;'>Target Volume</th>
                                             <th style='text-align:right; padding:6px 10px; width:10%;'>Deviasi</th>
                                         </tr>
@@ -191,22 +191,22 @@ class SubmissionMatrixTable extends BaseWidget
                                     ->where('item_id', $r->item_id)
                                     ->sum('volume');
 
-                                $sisa = $itemTarget - $kumulatif;
+                                $sisa = $kumulatif - $itemTarget;
                                 $color = $sisa < 0
                                     ? 'var(--filament-color-danger-600)'
                                     : 'var(--filament-color-success-600)';
 
                                 $html .= "
                                 <tr style='border-bottom:1px solid var(--filament-color-gray-200);'>
-                                    <td style='padding:4px 10px;'>" . e($item->name) . "</td>
-                                    <td style='padding:4px 10px;'>" . e($item->defaultUnit->symbol) . "</td>
+                                    <td style='padding:4px 10px; border-right:solid 1px;'>" . e($item->name) . "</td>
+                                    <td style='padding:4px 10px; border-right:solid 1px;'>" . e($item->defaultUnit->symbol) . "</td>
                                     <td style='padding:4px 10px;'>" . number_format($targetHarian, 2) . "</td>
                                     <td style='padding:4px 10px; text-align:right; font-family:monospace;'>" . number_format($harian, 2) . "</td>
-                                    <td style='padding:4px 10px; text-align:right; font-family:monospace;'>" .number_format($targetHarian - $harian, 2) . "</td>
+                                    <td style='padding:4px 10px; text-align:right; font-family:monospace; border-right:solid 1px;'>" .number_format($harian - $targetHarian, 2) . "</td>
 
                                     <td style='padding:4px 10px; text-align:right; font-family:monospace;'>" . number_format($kumulatif, 2) . "</td>
                                     <td style='padding:4px 10px; text-align:right; font-family:monospace;'>" . number_format($itemTarget, 2) . "</td>
-                                    <td style='padding:4px 10px; text-align:right; font-family:monospace; color:{$color}; font-weight:600;'>" . "-" .number_format($sisa, 2) . "</td>
+                                    <td style='padding:4px 10px; text-align:right; font-family:monospace; color:{$color}; font-weight:600;'>" . number_format($sisa, 2) . "</td>
                                 </tr>";
                             }
 
