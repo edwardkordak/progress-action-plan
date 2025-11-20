@@ -15,7 +15,6 @@ class LookupController extends Controller
         $r->validate(['satker_id' => 'required|exists:satkers,id']);
         return Ppk::where('satker_id', $r->satker_id)->orderBy('name')->get(['id', 'name']);
     }
-
     public function packages(Request $r)
     {
         $r->validate([
@@ -39,10 +38,8 @@ class LookupController extends Controller
                 ->get(['id', 'code', 'name']);
         }
 
-        // fallback jika tidak ada package_id
         return JobCategory::orderBy('sort_order')->get(['id', 'code', 'name']);
     }
-
 
     public function items(Request $r)
     {

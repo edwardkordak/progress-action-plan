@@ -100,7 +100,8 @@ class DatabaseSeeder extends Seeder
         /** === STEP 3: Target dari CSV === */
         $targetCsv = database_path('seeders/TargetTerbaru.csv');
         if (file_exists($targetCsv)) {
-            $count = $this->importCsvData($targetCsv, DataTarget::class, DataTargetDetail::class, $satker, $ppk, $pkg, $mapJob, $mapItem);
+            $count = $this->importCsvData($targetCsv, DataTarget::class, 
+            DataTargetDetail::class, $satker, $ppk, $pkg, $mapJob, $mapItem);
             $this->command->info("✅ Target CSV selesai! Total detail diimpor: {$count}");
         } else {
             $this->command->warn("⚠️ File TargetTerbaru.csv tidak ditemukan!");

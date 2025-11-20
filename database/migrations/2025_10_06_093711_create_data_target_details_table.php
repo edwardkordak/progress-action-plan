@@ -16,7 +16,7 @@ return new class extends Migration
             $t->foreignId('data_target_id')->constrained('data_targets')->cascadeOnDelete();
             $t->foreignId('job_category_id')->constrained('job_categories')->cascadeOnDelete();
             $t->foreignId('item_id')->constrained('items')->cascadeOnDelete();
-            $t->decimal('volume', 16, 2)->nullable();
+            $t->decimal('volume', 16, 2)->nullable(); // Perbuahan ke decimal
             $t->foreignId('satuan_id')->nullable()->constrained('units')->nullOnDelete();
             $t->text('keterangan')->nullable();
             $t->timestamps();

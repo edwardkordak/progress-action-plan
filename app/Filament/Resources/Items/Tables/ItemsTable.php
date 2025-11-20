@@ -2,61 +2,74 @@
 
 namespace App\Filament\Resources\Items\Tables;
 
+use Filament\Tables\Table;
+use Filament\Actions\EditAction;
+use Filament\Tables\Grouping\Group;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
-use Filament\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Table;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Actions\ToggleColumnsAction;
 
 class ItemsTable
 {
     public static function configure(Table $table): Table
     {
         return $table
+         ->groups([
+    Group::make('package.nama_paket')
+        ->label('Nama Paket'),
+])
+
             ->columns([
-                TextColumn::make('package.nama_paket')
-                    ->label('Nama Paket')
-                    ->limit(30)
-                    ->tooltip(fn ($record) => $record->package?->nama_paket)
-                    ->sortable()
-                    ->searchable(),
-
-                TextColumn::make('category.name')
-                    ->label('Jenis Pekerjaan')
-                    ->badge()
-                    ->color(fn ($state) => match ($state) {
-                        'Pekerjaan Saluran' => 'blue',
-                        'Pekerjaan Bangunan Sadap' => 'green',
-                        'Pekerjaan Bangunan Pelengkap' => 'purple',
-                        default => 'gray',
-                    })
-                    ->sortable(),
-
                 TextColumn::make('name')
-                    ->label('Item Pekerjaan')
+                    ->label('Item')
                     ->icon('heroicon-o-clipboard-document-list')
-                    ->limit(30)
+                    ->limit(35)
+                    ->wrap()
                     ->tooltip(fn ($record) => $record->name)
+                    ->description(fn ($record) => 'Kategori: ' . $record->category?->name)
                     ->searchable()
                     ->sortable(),
 
                 TextColumn::make('price')
-                    ->label('Harga Item')
+                    ->label('Harga')
                     ->badge()
-                    ->color('gray')
+                    ->money('idr')
                     ->sortable(),
+
                 TextColumn::make('defaultUnit.name')
-                    ->label('Satuan Volume')
+                    ->label('Satuan')
                     ->badge()
                     ->color('gray')
                     ->sortable(),
             ])
+
             ->filters([
-                // contoh filter tambahan kalau perlu
+                SelectFilter::make('package_id')
+                    ->relationship('package', 'nama_paket')
+                    ->searchable()
+                    ->label('Filter Paket'),
+
+                SelectFilter::make('category_id')
+                    ->relationship('category', 'name')
+                    ->searchable()
+                    ->label('Jenis Pekerjaan'),
             ])
+
+            ->contentGrid([
+                'md' => 2,
+                'xl' => 3,
+            ])
+
+            // ->headerActions([
+            //     ToggleColumnsAction::make(),
+            // ])
+
             ->recordActions([
                 EditAction::make(),
             ])
+
             ->toolbarActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),

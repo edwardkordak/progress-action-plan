@@ -25,17 +25,13 @@ class DataSubmissionController extends Controller
 
     public function store(Request $r)
     {
-        // HEADER
         $data = $r->validate([
             'satker_id'  => 'required|exists:satkers,id',
             'ppk_id'     => 'required|exists:ppks,id',
             'package_id' => 'required|exists:packages,id',
             'nama'       => 'required|string|max:255',
             'jabatan'    => 'required|string|max:255',
-            // cuman tambahan sementara
             'tanggal'    => 'required|date|before_or_equal:today',
-
-            // DETAIL (banyak baris per kategori)
             'details'                        => 'required|array|min:1',
             'details.*.category_id'          => 'required|exists:job_categories,id',
             'details.*.rows'                 => 'required|array|min:1',
