@@ -31,8 +31,13 @@ class DatabaseSeeder extends Seeder
         ]);
         collect([
             ['code' => 'PESA', 'name' => 'Pekerjaan Saluran', 'sort_order' => 1],
-            ['code' => 'PEMBA', 'name' => 'Pekerjaan Bangunan Sadap', 'sort_order' => 2],
-            ['code' => 'PELENG', 'name' => 'Pekerjaan Bangunan Pelengkap', 'sort_order' => 3],
+            ['code' => 'PEMBA', 'name' => 'Pekerjaan Bangunan Utama', 'sort_order' => 2],
+            ['code' => 'PELENG', 'name' => 'Pekerjaan Bangunan Pelengkap', 'sort_order' => 9],
+            ['code' => 'PEUNG', 'name' => 'Pekerjaan Bendung', 'sort_order' => 4],
+            ['code' => 'PESAI', 'name' => 'Pekerjaan Saluran Induk', 'sort_order' => 5],
+            ['code' => 'PESASE', 'name' => 'Pekerjaan Saluran Sekunder', 'sort_order' => 6],
+            ['code' => 'PESAPE', 'name' => 'Pekerjaan Saluran Pembuang', 'sort_order' => 7],
+            ['code' => 'PEBASA', 'name' => 'Pekerjaan Bangunan Sadap', 'sort_order' => 8],
         ])->each(fn ($jc) => JobCategory::firstOrCreate(['code' => $jc['code']], $jc));
 
         collect([
