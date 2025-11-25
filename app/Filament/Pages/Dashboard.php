@@ -16,10 +16,25 @@ use Filament\Pages\Dashboard\Concerns\HasFiltersForm;
 
 class Dashboard extends BaseDashboard
 {
-    // protected string $view = 'filament.pages.dashboard';
-
     use HasFiltersForm;
-      protected static ?string $title = 'PROGRESS FISIK TA 2025';
+
+    protected static ?string $title = 'PROGRESS FISIK TA 2025';
+
+    /**
+     * Default filter values saat dashboard load pertama kali
+     */
+    protected function getDefaultFilters(): array
+    {
+        return [
+            'package_id' => 1,   // default ambil package id = 1
+            'startDate'  => null,
+            'endDate'    => null,
+        ];
+    }
+
+    /**
+     * Filter form schema
+     */
     public function filtersForm(Schema $schema): Schema
     {
         return $schema
@@ -27,7 +42,7 @@ class Dashboard extends BaseDashboard
                 Section::make()
                     ->schema([
                         Select::make('package_id')
-                            ->label('Paket Pekerjaaan')
+                            ->label('Paket Pekerjaan')
                             ->options(Package::pluck('nama_paket', 'id'))
                             ->searchable()
                             ->placeholder('Pilih Paket')
@@ -37,11 +52,9 @@ class Dashboard extends BaseDashboard
                             ->label('Tanggal Mulai')
                             ->live(),
 
-
                         DatePicker::make('endDate')
                             ->label('Tanggal Selesai')
                             ->live(),
-
                     ])
                     ->columns(3)
                     ->columnSpanFull(),
