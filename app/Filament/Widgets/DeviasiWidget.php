@@ -18,6 +18,29 @@ class DeviasiWidget extends BaseWidget
 
     protected function getStats(): array
     {
+        $packageId = $this->filters['package_id'] ?? null;
+
+        // === Jika package belum dipilih, tampilkan Stat kosong ===
+        if (!$packageId) {
+            return [
+                Stat::make('Target', '0%')
+                    ->description('Pilih paket terlebih dahulu')
+                    ->chart([0])
+                    ->color('gray'),
+
+                Stat::make('Realisasi', '0%')
+                    ->description('Pilih paket terlebih dahulu')
+                    ->chart([0])
+                    ->color('gray'),
+
+                Stat::make('Deviasi', '0%')
+                    ->description('Pilih paket terlebih dahulu')
+                    ->chart([0])
+                    ->color('gray'),
+            ];
+        }
+
+        // --- Jika package sudah dipilih, baru jalankan kalkulasi ---
         $startDate = $this->filters['startDate']
             ? Carbon::parse($this->filters['startDate'])
             : Carbon::parse(DataTarget::min('tanggal') ?? now()->startOfMonth());
@@ -26,15 +49,13 @@ class DeviasiWidget extends BaseWidget
             ? Carbon::parse($this->filters['endDate'])
             : Carbon::parse(DataTarget::max('tanggal') ?? now()->endOfMonth());
 
-        $packageId = $this->filters['package_id'] ?? null;
-
-        // === Buat range tanggal ===
+        // === Range tanggal ===
         $period = new \DatePeriod($startDate, new \DateInterval('P1D'), $endDate->copy()->addDay());
-        $dates = collect($period)->map(fn ($d) => $d->format('Y-m-d'))->toArray();
+        $dates = collect($period)->map(fn($d) => $d->format('Y-m-d'))->toArray();
 
-        // === Hitung baseline (data sebelum tanggal mulai) ===
+        // === Baseline ===
         $baselineTarget = DataTarget::with(['details.item', 'package'])
-            ->when($packageId, fn ($q) => $q->where('package_id', $packageId))
+            ->when($packageId, fn($q) => $q->where('package_id', $packageId))
             ->where('tanggal', '<', $startDate)
             ->get()
             ->sum(function ($t) {
@@ -50,7 +71,7 @@ class DeviasiWidget extends BaseWidget
             });
 
         $baselineSub = DataSubmission::with(['details.item', 'package'])
-            ->when($packageId, fn ($q) => $q->where('package_id', $packageId))
+            ->when($packageId, fn($q) => $q->where('package_id', $packageId))
             ->where('tanggal', '<', $startDate)
             ->get()
             ->sum(function ($s) {
@@ -65,18 +86,18 @@ class DeviasiWidget extends BaseWidget
                 return $sum;
             });
 
-        // === Ambil data target & submission ===
+        // === Data target & submission ===
         $targets = DataTarget::with(['details.item', 'package'])
-            ->when($packageId, fn ($q) => $q->where('package_id', $packageId))
+            ->where('package_id', $packageId)
             ->whereBetween('tanggal', [$startDate, $endDate])
             ->get();
 
         $subs = DataSubmission::with(['details.item', 'package'])
-            ->when($packageId, fn ($q) => $q->where('package_id', $packageId))
+            ->where('package_id', $packageId)
             ->whereBetween('tanggal', [$startDate, $endDate])
             ->get();
 
-        // === Hitung kumulatif harian ===
+        // === Hitung kumulatif ===
         $targetProgress = [];
         $submissionProgress = [];
 
@@ -84,7 +105,6 @@ class DeviasiWidget extends BaseWidget
         $cumSub = $baselineSub;
 
         foreach ($dates as $date) {
-            // Target harian
             $dayTarget = $targets->where('tanggal', $date)->sum(function ($t) {
                 $pkgPrice = $t->package->price ?? 0;
                 if ($pkgPrice == 0) return 0;
@@ -96,10 +116,10 @@ class DeviasiWidget extends BaseWidget
                 }
                 return $sum;
             });
+
             $cumTarget += $dayTarget;
             $targetProgress[] = round($cumTarget, 2);
 
-            // Submission harian
             $daySub = $subs->where('tanggal', $date)->sum(function ($s) {
                 $pkgPrice = $s->package->price ?? 0;
                 if ($pkgPrice == 0) return 0;
@@ -111,11 +131,12 @@ class DeviasiWidget extends BaseWidget
                 }
                 return $sum;
             });
+
             $cumSub += $daySub;
             $submissionProgress[] = round($cumSub, 2);
         }
 
-        // === Total akhir dan deviasi ===
+        // === Akhir ===
         $totalTarget = end($targetProgress) ?: $baselineTarget;
         $totalSub = end($submissionProgress) ?: $baselineSub;
         $deviasi = round($totalSub - $totalTarget, 2);
@@ -123,20 +144,20 @@ class DeviasiWidget extends BaseWidget
         return [
             Stat::make('Target', $totalTarget . '%')
                 ->description('Target Progres')
-                  ->Icon('heroicon-m-arrow-trending-up')
                 ->chart($targetProgress)
                 ->color('target'),
 
             Stat::make('Realisasi', $totalSub . '%')
                 ->description('Progres Realisasi')
-                ->Icon('heroicon-m-arrow-trending-up')
                 ->chart($submissionProgress)
                 ->color('realisasi'),
 
             Stat::make('Deviasi', $deviasi . '%')
                 ->description('Realisasi - Target')
-                // ->Icon('heroicon-m-arrow-trending-down')
-                ->chart(array_map(fn ($i) => round($submissionProgress[$i] - $targetProgress[$i], 2), array_keys($dates)))
+                ->chart(array_map(
+                    fn($i) => round($submissionProgress[$i] - $targetProgress[$i], 2),
+                    array_keys($dates)
+                ))
                 ->color($deviasi >= 0 ? 'success' : 'danger'),
         ];
     }

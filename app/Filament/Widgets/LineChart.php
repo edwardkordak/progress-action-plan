@@ -19,6 +19,16 @@ class LineChart extends ChartWidget
 
     protected function getData(): array
     {
+        $packageId = $this->filters['package_id'] ?? null;
+
+        // === Jika package belum dipilih, kembalikan chart kosong ===
+        if (!$packageId) {
+            return [
+                'datasets' => [],
+                'labels' => [],
+            ];
+        }
+
         // === RANGE TANGGAL ===
         $firstDate = DataTarget::min('tanggal');
         $lastDate  = DataTarget::max('tanggal');
@@ -31,15 +41,13 @@ class LineChart extends ChartWidget
             ? Carbon::parse($this->filters['endDate'])
             : Carbon::parse($lastDate ?? now()->endOfMonth());
 
-        $packageId = $this->filters['package_id'] ?? null;
-
         // Semua tanggal dalam rentang
         $period = new \DatePeriod($startDate, new \DateInterval('P1D'), $endDate->copy()->addDay());
-        $allDates = collect($period)->map(fn ($d) => $d->format('Y-m-d'))->toArray();
+        $allDates = collect($period)->map(fn($d) => $d->format('Y-m-d'))->toArray();
 
         // === TARGET HARIAN ===
         $targets = DataTarget::with(['details.item', 'package'])
-            ->when($packageId, fn ($q) => $q->where('package_id', $packageId))
+            ->when($packageId, fn($q) => $q->where('package_id', $packageId))
             ->whereBetween('tanggal', [$startDate, $endDate])
             ->orderBy('tanggal')
             ->get();
@@ -60,7 +68,7 @@ class LineChart extends ChartWidget
 
         // === REALISASI HARIAN ===
         $submissions = DataSubmission::with(['details.item', 'package'])
-            ->when($packageId, fn ($q) => $q->where('package_id', $packageId))
+            ->when($packageId, fn($q) => $q->where('package_id', $packageId))
             ->whereBetween('tanggal', [$startDate, $endDate])
             ->orderBy('tanggal')
             ->get();
@@ -80,9 +88,8 @@ class LineChart extends ChartWidget
         }
 
         // === BASELINE ===
-        // Target dihitung otomatis dari tanggal sebelum start
         $baselineTarget = DataTarget::with(['details.item', 'package'])
-            ->when($packageId, fn ($q) => $q->where('package_id', $packageId))
+            ->when($packageId, fn($q) => $q->where('package_id', $packageId))
             ->where('tanggal', '<', $startDate)
             ->get()
             ->sum(function ($target) {
@@ -97,9 +104,8 @@ class LineChart extends ChartWidget
                 return $bobot;
             });
 
-        // Submission baseline juga dihitung otomatis dari tanggal sebelum start
         $baselineSubmission = DataSubmission::with(['details.item', 'package'])
-            ->when($packageId, fn ($q) => $q->where('package_id', $packageId))
+            ->when($packageId, fn($q) => $q->where('package_id', $packageId))
             ->where('tanggal', '<', $startDate)
             ->get()
             ->sum(function ($sub) {
@@ -128,17 +134,9 @@ class LineChart extends ChartWidget
             $submissionCumulative[] = round($submissionSum, 3);
         }
 
-        // Label tanggal (format d M)
-        $labels = array_map(fn ($d) => Carbon::parse($d)->format('d M'), $allDates);
+        // === LABEL TANGGAL ===
+        $labels = array_map(fn($d) => Carbon::parse($d)->format('d M'), $allDates);
 
-        if (empty($targetCumulative) && empty($submissionCumulative)) {
-            return [
-                'datasets' => [],
-                'labels' => [],
-            ];
-        }
-
-        // === HASIL CHART ===
         return [
             'datasets' => [
                 [
@@ -161,6 +159,7 @@ class LineChart extends ChartWidget
             'labels' => $labels,
         ];
     }
+
 
     protected function getType(): string
     {
