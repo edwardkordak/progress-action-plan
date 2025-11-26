@@ -23,7 +23,8 @@ class SubmissionMatrixTable extends BaseWidget
 
     protected function getTableQuery(): Builder
     {
-        $packageId = $this->filters['package_id'] ?? null;
+        // $packageId = $this->filters['package_id'] ?? null;
+        $packageId = $this->filters['package_id'] ?? 1;
         $start = $this->filters['startDate'] ?? null;
         $end = $this->filters['endDate'] ?? null;
 
@@ -224,8 +225,11 @@ class SubmissionMatrixTable extends BaseWidget
 
     protected function getTableEmptyStateHeading(): ?string
     {
-        return ($this->filters['package_id'] ?? null)
+        return ($this->filters['package_id'] ?? 1)
             ? 'Tidak ada data submission untuk filter ini.'
             : 'Pilih Paket terlebih dahulu.';
+        // return ($this->filters['package_id'] ?? null)
+        //     ? 'Tidak ada data submission untuk filter ini.'
+        //     : 'Pilih Paket terlebih dahulu.';
     }
 }
