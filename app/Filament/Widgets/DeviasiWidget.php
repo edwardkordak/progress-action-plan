@@ -26,9 +26,7 @@ class DeviasiWidget extends BaseWidget
             ? Carbon::parse($this->filters['endDate'])
             : Carbon::parse(DataTarget::max('tanggal') ?? now()->endOfMonth());
 
-        $packageId = $this->filters['package_id'] ?? 1;
-
-        // $packageId = $this->filters['package_id'] ?? null;
+        $packageId = $this->filters['package_id'] ?? null;
 
         // === Buat range tanggal ===
         $period = new \DatePeriod($startDate, new \DateInterval('P1D'), $endDate->copy()->addDay());

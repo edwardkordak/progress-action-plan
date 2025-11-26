@@ -31,8 +31,7 @@ class LineChart extends ChartWidget
             ? Carbon::parse($this->filters['endDate'])
             : Carbon::parse($lastDate ?? now()->endOfMonth());
 
-        $packageId = $this->filters['package_id'] ?? 1;
-        // $packageId = $this->filters['package_id'] ?? null;
+        $packageId = $this->filters['package_id'] ?? null;
 
         // Semua tanggal dalam rentang
         $period = new \DatePeriod($startDate, new \DateInterval('P1D'), $endDate->copy()->addDay());
